@@ -1,0 +1,291 @@
+@import "tailwindcss";
+
+/* Smooth Tab Transition & View Entrance Animations */
+@keyframes tabViewFadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.996);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tab-view-enter {
+  animation: tabViewFadeSlideIn 0.34s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: opacity, transform;
+}
+
+.nav-tabs .nav-tab {
+  transition:
+    background-color 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+.nav-tabs .nav-tab:hover:not(.active) {
+  transform: translateY(-1.5px);
+}
+
+.nav-tabs .nav-tab.active {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-view-enter {
+    animation: none !important;
+  }
+  .nav-tabs .nav-tab {
+    transition: none !important;
+  }
+}
+
+/* ============================================================================
+   Full-Screen Icon-Only Mode for Pedagogy & Assessment Tab (#pedagogyView)
+   عند فتح تبويب منصة الهندسة البيداغوجية والتقويم يملأ الشاشة كاملة ولا تظهر سوى الأيقونات وواجهة التبويب
+   ============================================================================ */
+html:has(body.pedagogy-fullscreen-mode),
+body.pedagogy-fullscreen-mode {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  background: #f1f5f9 !important;
+}
+
+body.pedagogy-fullscreen-mode #appHeader,
+body.pedagogy-fullscreen-mode #activeTabHeroBanner,
+body.pedagogy-fullscreen-mode #upcomingSessionRadarBanner,
+body.pedagogy-fullscreen-mode #agendaAlerts,
+body.pedagogy-fullscreen-mode #calendarSmartExamAlertBanner,
+body.pedagogy-fullscreen-mode #homeSmartExamAlertBanner,
+body.pedagogy-fullscreen-mode #absenceSmartExamAlertBanner {
+  display: none !important;
+}
+
+body.pedagogy-fullscreen-mode .nav-tabs {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 60 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 3px 10px !important;
+  border-radius: 0 !important;
+  background: #020617 !important;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.28) !important;
+  box-shadow: 0 2px 10px rgba(2, 6, 23, 0.35) !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  overflow-x: auto !important;
+}
+
+body.pedagogy-fullscreen-mode .nav-tabs .nav-tab {
+  width: 31px !important;
+  min-width: 31px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(30, 41, 59, 0.75) !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  color: #cbd5e1 !important;
+  flex: 0 0 auto !important;
+}
+
+body.pedagogy-fullscreen-mode .nav-tabs .nav-tab:hover:not(.active) {
+  background: rgba(51, 65, 85, 0.95) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+}
+
+body.pedagogy-fullscreen-mode .nav-tabs .nav-tab.active {
+  background: linear-gradient(135deg, #06b6d4, #0284c7) !important;
+  color: #020617 !important;
+  border-color: #67e8f9 !important;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.45) !important;
+}
+
+body.pedagogy-fullscreen-mode .nav-tabs .nav-tab .nav-tab-title,
+body.pedagogy-fullscreen-mode .nav-tabs .nav-tab .presentation-badge-pill,
+body.pedagogy-fullscreen-mode .nav-tabs .nav-tab .memory-opt-mini-badge {
+  display: none !important;
+}
+
+body.pedagogy-fullscreen-mode .nav-tabs .nav-tab .nav-tab-icon {
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.pedagogy-fullscreen-mode .container {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow-x: hidden !important;
+}
+
+body.pedagogy-fullscreen-mode #pedagogyView {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: calc(100vh - 38px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+body.pedagogy-fullscreen-mode #react-pedagogy-root {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: calc(100vh - 38px) !important;
+  overflow-x: hidden !important;
+}
+
+/* ============================================================================
+   Pedagogical Print Engine (محرك الطباعة البيداغوجية المتطور للوثائق التربوية A4)
+   يضمن طباعة نقية خالية من أشرطة التنقل أو الحواف الزائدة مع هوامش A4 منضبطة
+   ============================================================================ */
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color: #000000 !important;
+  }
+
+  /* إخفاء تام لجميع عناصر واجهة البرنامج والتطبيقات عند الطباعة */
+  #loginScreen,
+  .login-screen,
+  #appHeader,
+  .app-header-main,
+  .nav-tabs,
+  body.pedagogy-fullscreen-mode .nav-tabs,
+  header,
+  aside,
+  nav,
+  .top-navigation-header,
+  .no-print,
+  #activeTabHeroBanner,
+  #upcomingSessionRadarBanner,
+  #agendaAlerts,
+  #calendarSmartExamAlertBanner,
+  #homeSmartExamAlertBanner,
+  #absenceSmartExamAlertBanner,
+  .home-icons-container,
+  #btnScrollToTop,
+  .toast-container,
+  #mathSymbolPalettePopover,
+  .student-print-mode-control-bar,
+  #onboardingGuideModal,
+  #mobileExamNotificationDialog,
+  .modal-overlay,
+  .modal,
+  [role="dialog"]:not(.printable-dialog),
+  .a4-studio-backdrop > .no-print,
+  .fixed,
+  .floating-tools {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* إتاحة التدفق الطبيعي لمحتوى الوثيقة البيداغوجية وإلغاء أي قيود على العرض والارتفاع */
+  body.pedagogy-fullscreen-mode .container,
+  body.pedagogy-fullscreen-mode #pedagogyView,
+  body.pedagogy-fullscreen-mode #react-pedagogy-root,
+  body.pedagogy-fullscreen-mode main,
+  .a4-studio-backdrop {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    display: block !important;
+    overflow: visible !important;
+    min-height: auto !important;
+  }
+
+  /* إزالة أي تحويلات تكبير أو إزاحة لمسية على حاوية الورقة عند الطباعة */
+  .print-zoom-wrapper {
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    position: static !important;
+  }
+
+  /* ورقة الفرض A4 المستهدفة بالطباعة */
+  #printable-document-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    page-break-after: auto !important;
+  }
+
+  /* فواصل الصفحات الديداكتيكية المنضبطة */
+  .page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+    margin-top: 0 !important;
+    padding-top: 6mm !important;
+  }
+
+  .avoid-break,
+  .exercise-box,
+  .tcolorbox-container,
+  table,
+  tr,
+  .figure-card,
+  .grading-strip {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* حماية الصيغ الرياضية وجداول التأطير من التقطيع العرضي عند فاصل الصفحات */
+  .math-block,
+  .katex-display,
+  mjx-container,
+  svg {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+
