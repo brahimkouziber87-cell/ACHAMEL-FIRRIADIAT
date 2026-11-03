@@ -11179,6 +11179,23 @@ export default function App() {
                 <span>{isConfigDeckCollapsed && !showQuickEditor ? "إلغاء التركيز الورقي" : "وضع التركيز الورقي A4"}</span>
               </button>
 
+              {/* زر إظهار/إخفاء محرر العناوين والترويسة السريع لضمان هدوء ونظافة واجهة المعاينة الورقية */}
+              {viewMode === "PREVIEW" && (
+                <button
+                  type="button"
+                  onClick={() => setShowQuickEditor((v) => !v)}
+                  title="فتح أو إغلاق محرر العناوين والترويسة السريع"
+                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black border transition flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
+                    showQuickEditor
+                      ? "bg-indigo-900 text-white border-indigo-900 shadow-xs"
+                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-indigo-950"
+                  }`}
+                >
+                  <PenLine className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>{showQuickEditor ? "إغلاق محرر العناوين ▲" : "تحرير العناوين والترويسة ✏️"}</span>
+                </button>
+              )}
+
               {/* مبدل سريع للنماذج وعناصر الإجابة مباشرة فوق المعاينة */}
               {viewMode === "PREVIEW" &&
                 (activeModule === "DS_142_08" || activeModule === "DM_SERIE") && (
@@ -11400,8 +11417,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* محرر العناوين السريع المزود بالتحقق من صحة البيانات (Validation) بعد دمج خيارات التنسيق والخطوط في لوحة الإعدادات */}
-          {viewMode === "PREVIEW" && (
+          {/* محرر العناوين السريع المزود بالتحقق من صحة البيانات (Validation) — يظهر فقط عند النقر عليه لضمان هدوء ونظافة الواجهة */}
+          {viewMode === "PREVIEW" && showQuickEditor && (
             <div
               className={`border rounded-xl p-3 space-y-2.5 no-print transition-colors ${
                 quickEditorValidation.hasErrors

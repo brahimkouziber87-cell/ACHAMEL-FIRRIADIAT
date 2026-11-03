@@ -1055,12 +1055,12 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
   >(null);
   const [previewScopeFilter, setPreviewScopeFilter] = React.useState<
     "ALL" | "SUJET_ONLY" | "SOLUTIONS_ONLY" | "SPEC_GRID_ONLY"
-  >("ALL");
+  >("SUJET_ONLY");
   const [laserInkSaverMode, setLaserInkSaverMode] = React.useState<boolean>(false);
   const [showAdvancedPaperSettings, setShowAdvancedPaperSettings] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    setPreviewScopeFilter("ALL");
+    setPreviewScopeFilter("SUJET_ONLY");
   }, [activeModule, dmSubType]);
 
   const effectivePrintScope: "SUJET_ONLY" | "SOLUTIONS_ONLY" | "SPEC_GRID_ONLY" | null =
@@ -5631,7 +5631,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                             </span>
                           </div>
 
-                          <ol className="list-decimal list-inside space-y-2.5 text-xs text-slate-800 leading-relaxed">
+                          <ol className="list-decimal list-inside space-y-4 text-[13.5px] text-slate-900 leading-[2.15]">
                             {activeQuestions.map((q, qIdx) => {
                               const meta = qMetas[qIdx];
                               const prefix =
@@ -5641,7 +5641,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                                     : "(برهان موجه بملء الفراغات) "
                                   : "";
                               return (
-                                <li key={qIdx} className="space-y-1">
+                                <li key={qIdx} className="space-y-2 mb-3">
                                   <div className="inline">
                                     <span>
                                       {prefix && <span className="font-semibold">{prefix}</span>}
@@ -5856,9 +5856,9 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                                   ({part.partPoints} {isFr ? "pts" : "ن"})
                                 </span>
                               </div>
-                              <div className="space-y-1.5 text-xs text-slate-800 leading-relaxed">
+                              <div className="space-y-4 text-[13.5px] text-slate-900 leading-[2.15]">
                                 {(isFr ? part.questionsFr : part.questionsAr).map((q, qIdx) => (
-                                  <div key={qIdx} className="space-y-1">
+                                  <div key={qIdx} className="space-y-2 mb-3">
                                     <div><MathText text={q} /></div>
                                     {isBi && part.questionsFr[qIdx] && (
                                       <div
@@ -6955,9 +6955,9 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                                 </div>
                               </div>
 
-                              <ol className="list-decimal list-inside space-y-2 text-xs text-slate-800 leading-relaxed">
+                              <ol className="list-decimal list-inside space-y-4 text-[13.5px] text-slate-900 leading-[2.15]">
                                 {activeQs.map((q, qIdx) => (
-                                  <li key={qIdx} className="space-y-1">
+                                  <li key={qIdx} className="space-y-2 mb-3">
                                     <span className="font-medium"><MathText text={q} /></span>
                                     {isBi && block.questionsFr[qIdx] && (
                                       <div
@@ -8405,9 +8405,9 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                     <span className="text-slate-800 font-semibold">{isFr ? ex.prerequisiteFr : ex.prerequisiteAr}</span>
                   </div>
 
-                  <ol className="list-none space-y-2 text-xs text-slate-800 leading-relaxed">
+                  <ol className="list-none space-y-4 text-[13.5px] text-slate-900 leading-[2.15]">
                     {(isFr ? ex.questionsFr : ex.questionsAr).map((q, qIdx) => (
-                      <li key={qIdx} className="space-y-1">
+                      <li key={qIdx} className="space-y-2 mb-3">
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="font-bold text-slate-950">{q.label}</span>
                           <span className="flex-1"><MathText text={q.text} /></span>
