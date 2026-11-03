@@ -267,11 +267,32 @@ body.pedagogy-fullscreen-mode #react-pedagogy-root {
     padding-top: 6mm !important;
   }
 
+  /* منع انفصال العناوين عن محتواها في أسفل الصفحة */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid !important;
+    break-after: avoid-page !important;
+  }
+
+  /* ضبط الجداول العريضة في الجذاذات والتوزيع السنوي وشبكات التخصيص لمنع الاقتطاع الأفقي */
+  #printable-document-sheet table {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #printable-document-sheet thead {
+    display: table-header-group !important;
+  }
+
+  #printable-document-sheet tr,
   .avoid-break,
   .exercise-box,
   .tcolorbox-container,
-  table,
-  tr,
   .figure-card,
   .grading-strip {
     page-break-inside: avoid !important;
@@ -285,7 +306,152 @@ body.pedagogy-fullscreen-mode #react-pedagogy-root {
   svg {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    max-width: 100% !important;
+  }
+
+  /* تحويل الكتل الداكنة عند تفعيل وضع توفير الحبر للطابعات الليزرية (Laser Ink-Saver) */
+  #printable-document-sheet[data-ink-saver="true"] .bg-slate-900,
+  #printable-document-sheet[data-ink-saver="true"] .bg-slate-950,
+  #printable-document-sheet[data-ink-saver="true"] .bg-slate-800,
+  #printable-document-sheet[data-ink-saver="true"] .bg-indigo-950,
+  #printable-document-sheet[data-ink-saver="true"] .bg-emerald-900,
+  #printable-document-sheet[data-ink-saver="true"] .bg-cyan-950 {
+    background: #f8fafc !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    border-color: #334155 !important;
+    box-shadow: none !important;
+  }
+
+  #printable-document-sheet[data-ink-saver="true"] .text-white,
+  #printable-document-sheet[data-ink-saver="true"] .text-slate-100,
+  #printable-document-sheet[data-ink-saver="true"] .text-slate-200,
+  #printable-document-sheet[data-ink-saver="true"] .text-slate-300,
+  #printable-document-sheet[data-ink-saver="true"] .text-cyan-300,
+  #printable-document-sheet[data-ink-saver="true"] .text-cyan-400,
+  #printable-document-sheet[data-ink-saver="true"] .text-amber-200,
+  #printable-document-sheet[data-ink-saver="true"] .text-amber-300,
+  #printable-document-sheet[data-ink-saver="true"] .text-emerald-300,
+  #printable-document-sheet[data-ink-saver="true"] .text-teal-200,
+  #printable-document-sheet[data-ink-saver="true"] .text-teal-300,
+  #printable-document-sheet[data-ink-saver="true"] .text-sky-300 {
+    color: #0f172a !important;
   }
 }
+
+/* وضع توفير الحبر والأبيض والأسود الأكاديمي في المعاينة الحية والطباعة (Laser Ink-Saver Preview) */
+#printable-document-sheet.laser-ink-saver .bg-slate-900,
+#printable-document-sheet.laser-ink-saver .bg-slate-950,
+#printable-document-sheet.laser-ink-saver .bg-slate-800,
+#printable-document-sheet.laser-ink-saver .bg-slate-800\/70,
+#printable-document-sheet.laser-ink-saver .bg-slate-800\/80,
+#printable-document-sheet.laser-ink-saver .bg-indigo-950,
+#printable-document-sheet.laser-ink-saver .bg-emerald-900,
+#printable-document-sheet.laser-ink-saver .bg-cyan-950 {
+  background-color: #f8fafc !important;
+  background-image: none !important;
+  color: #0f172a !important;
+  border-color: #334155 !important;
+  box-shadow: none !important;
+}
+
+#printable-document-sheet.laser-ink-saver .text-white,
+#printable-document-sheet.laser-ink-saver .text-slate-100,
+#printable-document-sheet.laser-ink-saver .text-slate-200,
+#printable-document-sheet.laser-ink-saver .text-slate-300,
+#printable-document-sheet.laser-ink-saver .text-slate-400,
+#printable-document-sheet.laser-ink-saver .text-cyan-200,
+#printable-document-sheet.laser-ink-saver .text-cyan-300,
+#printable-document-sheet.laser-ink-saver .text-cyan-400,
+#printable-document-sheet.laser-ink-saver .text-amber-200,
+#printable-document-sheet.laser-ink-saver .text-amber-300,
+#printable-document-sheet.laser-ink-saver .text-emerald-300,
+#printable-document-sheet.laser-ink-saver .text-emerald-400,
+#printable-document-sheet.laser-ink-saver .text-teal-200,
+#printable-document-sheet.laser-ink-saver .text-teal-300,
+#printable-document-sheet.laser-ink-saver .text-sky-300 {
+  color: #0f172a !important;
+}
+
+/* ============================================================================
+   Moroccan Educational Document Realism (تجويد الإخراج الأكاديمي والواقعي)
+   ============================================================================ */
+.moroccan-official-sheet {
+  background-color: #ffffff;
+  box-shadow: 0 4px 24px -2px rgba(15, 23, 42, 0.12), 0 1px 3px 0 rgba(15, 23, 42, 0.06);
+  border: 1px solid #cbd5e1;
+}
+
+@media print {
+  .moroccan-official-sheet {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+/* الترويسة الأكاديمية المغربية بخطين مزدوجين وختم المؤسسة */
+.moroccan-academic-divider {
+  border-top: 2px solid #0f172a;
+  border-bottom: 1px solid #0f172a;
+  height: 3px;
+  margin: 6px 0;
+}
+
+/* شارة ختم المؤسسة وتأشيرة الإدارة التربوية */
+.moroccan-seal-stamp {
+  border: 1.5px dashed #64748b;
+  border-radius: 8px;
+  padding: 4px 6px;
+  text-align: center;
+  color: #334155;
+  background-color: #f8fafc;
+}
+
+/* خط التنقيط للكتابة باليد */
+.moroccan-dotted-guide {
+  border-bottom: 1.5px dotted #64748b;
+  display: inline-block;
+  min-height: 18px;
+  vertical-align: baseline;
+}
+
+/* شارة التمارين الأكاديمية الرسمية */
+.moroccan-exercise-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #0f172a;
+  color: #ffffff;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  letter-spacing: -0.01em;
+}
+
+.moroccan-bareme-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 800;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+}
+
+/* مذكرة وتذييل الامتحان الوزاري المغربي */
+.moroccan-exam-footer-notice {
+  border-top: 1px solid #cbd5e1;
+  padding-top: 6px;
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: #475569;
+}
+
+
 
 

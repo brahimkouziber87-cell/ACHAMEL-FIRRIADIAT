@@ -3758,30 +3758,30 @@
             </div>
 
             <!-- KPI Metric Cards Header & Drag-and-Drop Reorder Bar -->
-            <div id="dashGlobalKpiHeaderBar" class="hide-in-presentation" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding: 8px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <span style="width: 28px; height: 28px; border-radius: 8px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; justify-content: center;">
-                        <span data-lucide="grip" data-size="15"></span>
+            <div id="dashGlobalKpiHeaderBar" class="hide-in-presentation" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin: 18px 0 20px 0; padding: 16px 24px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 250, 252, 0.62) 100%); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.85); border-radius: 22px; box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.07), 0 4px 12px -2px rgba(37, 99, 235, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span style="width: 36px; height: 36px; border-radius: 12px; background: rgba(239, 246, 255, 0.85); color: #2563eb; border: 1px solid rgba(191, 219, 254, 0.9); display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);">
+                        <span data-lucide="grip" data-size="17"></span>
                     </span>
-                    <span style="font-size: 0.88rem; font-weight: 900; color: #0f172a;">بطاقات المؤشرات الإحصائية الرئيسية (KPIs)</span>
-                    <span style="font-size: 0.73rem; font-weight: 700; color: #1e40af; background: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 0.95rem; font-weight: 900; color: #0f172a; letter-spacing: -0.01em;">بطاقات المؤشرات الإحصائية الرئيسية (KPIs)</span>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #1e40af; background: rgba(239, 246, 255, 0.75); backdrop-filter: blur(8px); border: 1px solid rgba(191, 219, 254, 0.85); padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;">
                         <span data-lucide="move" data-size="12"></span>
                         <span>اسحب البطاقات وأفلتها لإعادة ترتيب المؤشرات حسب الأهمية</span>
                     </span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span id="dashKpiCustomOrderStatus" style="display: none; font-size: 0.72rem; font-weight: 800; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 6px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="dashKpiCustomOrderStatus" style="display: none; font-size: 0.74rem; font-weight: 800; color: #059669; background: rgba(236, 253, 245, 0.85); border: 1px solid rgba(167, 243, 208, 0.9); padding: 4px 11px; border-radius: 10px;">
                         ✓ ترتيب مخصص مفعل
                     </span>
-                    <button type="button" onclick="window.resetDashboardKpiOrder && window.resetDashboardKpiOrder()" style="background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 7px; font-size: 0.74rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s ease;" title="إعادة ترتيب بطاقات المؤشرات إلى الوضع الافتراضي">
-                        <span data-lucide="rotate-ccw" data-size="12"></span>
+                    <button type="button" onclick="window.resetDashboardKpiOrder && window.resetDashboardKpiOrder()" style="background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(8px); color: #334155; border: 1px solid rgba(203, 213, 225, 0.85); padding: 7px 14px; border-radius: 12px; font-size: 0.76rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.18s ease; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);" title="إعادة ترتيب بطاقات المؤشرات إلى الوضع الافتراضي">
+                        <span data-lucide="rotate-ccw" data-size="13"></span>
                         <span>استعادة الترتيب الافتراضي</span>
                     </button>
                 </div>
             </div>
 
             <!-- KPI Metric Cards Grid (Draggable & Reorderable) -->
-            <div id="dashGlobalKpiGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <div id="dashGlobalKpiGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; margin-bottom: 22px;">
                 <!-- 1. Total Cumulative Absence Hours across All Classes with Month-over-Month Change -->
                 <div class="card dash-kpi-draggable-card" id="dashKpiCard_totalAbsenceHours" data-kpi-id="total-absence-hours" draggable="true" style="padding: 12px 15px; border-right: 4px solid #2563eb; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);">
                     <div class="kpi-card-drag-bar">

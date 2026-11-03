@@ -44346,7 +44346,11 @@ ${log.notes || 'سير الحصة عادي'}
                 ];
                 hideElemIds.forEach(id => {
                     const el = document.getElementById(id);
-                    if (el) el.style.display = _isDashboardFocusMode ? 'none' : '';
+                    if (!el) return;
+                    if (el.style.display && el.style.display !== 'none' && !el.dataset.origDisplay) {
+                        el.dataset.origDisplay = el.style.display;
+                    }
+                    el.style.display = _isDashboardFocusMode ? 'none' : (el.dataset.origDisplay || '');
                 });
 
                 // تطبيق الترتيب المفضل لبطاقات المؤشرات وتفعيل السحب والإفلات

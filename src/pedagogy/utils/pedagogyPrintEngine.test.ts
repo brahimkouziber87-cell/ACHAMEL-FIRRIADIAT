@@ -7,6 +7,7 @@ import {
 import {
   DOC_VIEW_MARGIN_MODELS,
   resolveAutoDocViewMarginModel,
+  resolveDocumentPrintStudioProfile,
 } from "../components/PrintablePreview.tsx";
 
 test("resolveAutoDocViewMarginModel maps modules to accurate Moroccan ministerial margins", () => {
@@ -28,6 +29,34 @@ test("resolveAutoDocViewMarginModel maps modules to accurate Moroccan ministeria
   const ficheModel = resolveAutoDocViewMarginModel("FICHE_OP2007");
   assert.equal(ficheModel.id, "FICHE_PEDAGOGIQUE_WIDE");
   assert.equal(ficheModel.topMm, 10);
+
+  const repartitionModel = resolveAutoDocViewMarginModel("REPARTITION_CERTIF");
+  assert.equal(repartitionModel.id, "REPARTITION_ANNUELLE_WIDE");
+  assert.equal(repartitionModel.topMm, 10);
+  assert.equal(repartitionModel.xMm, 9);
+  assert.ok(DOC_VIEW_MARGIN_MODELS.some((m) => m.id === "REPARTITION_ANNUELLE_WIDE"));
+});
+
+test("resolveDocumentPrintStudioProfile returns document-specific print scopes and section anchors for all 5 modules", () => {
+  const dsProfile = resolveDocumentPrintStudioProfile("DS_142_08", "DEVOIR_MAISON", false);
+  assert.equal(dsProfile.scopes.length, 4);
+  assert.ok(dsProfile.quickSections.some((s) => s.id === "SYNTHESIS_PROBLEM"));
+
+  const serieProfile = resolveDocumentPrintStudioProfile("DM_SERIE", "SERIE_TD", false);
+  assert.equal(serieProfile.scopes.length, 4);
+  assert.match(serieProfile.moduleBadge, /سلسلة تمارين/);
+
+  const ficheProfile = resolveDocumentPrintStudioProfile("FICHE_OP2007", "DEVOIR_MAISON", false);
+  assert.equal(ficheProfile.scopes.length, 4);
+  assert.ok(ficheProfile.scopes.some((s) => s.scope === "SPEC_GRID_ONLY"));
+
+  const diagProfile = resolveDocumentPrintStudioProfile("DIAGNOSTIC", "DEVOIR_MAISON", false);
+  assert.equal(diagProfile.scopes.length, 4);
+  assert.ok(diagProfile.quickSections.some((s) => s.id === "SOLUTIONS"));
+
+  const repProfile = resolveDocumentPrintStudioProfile("REPARTITION_CERTIF", "DEVOIR_MAISON", false);
+  assert.equal(repProfile.scopes.length, 4);
+  assert.match(repProfile.moduleBadge, /التوزيع الدوري السنوي/);
 });
 
 test("computePrintMediaQueryMetrics calculates exact printable area and css @page rules", () => {

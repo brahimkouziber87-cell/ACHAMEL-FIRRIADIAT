@@ -12153,18 +12153,69 @@ body.student-print-mode.print-mode-size-a5 .student-a4-minimalist-sheet .student
 
 
 /* ========================================================
-   Draggable & Reorderable Dashboard KPI Cards
+   Draggable & Reorderable Dashboard KPI Cards & Glass Header
    ======================================================== */
+#dashGlobalKpiHeaderBar {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 250, 252, 0.62) 100%) !important;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.85) !important;
+    border-radius: 22px !important;
+    padding: 16px 24px !important;
+    margin: 18px 0 20px 0 !important;
+    box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.07), 0 4px 12px -2px rgba(37, 99, 235, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.dash-focus-mode-active #dashGlobalKpiHeaderBar {
+    display: none !important;
+}
+
+#dashGlobalKpiGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+#dashGlobalKpiHeaderBar:hover {
+    box-shadow: 0 14px 34px -8px rgba(15, 23, 42, 0.1), 0 4px 14px -2px rgba(37, 99, 235, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(191, 219, 254, 0.95) !important;
+}
+
+#dashGlobalKpiHeaderBar button:hover {
+    background: rgba(239, 246, 255, 0.95) !important;
+    color: #1d4ed8 !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+
+body.dark-mode #dashGlobalKpiHeaderBar {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.78) 0%, rgba(15, 23, 42, 0.68) 100%) !important;
+    border-color: rgba(71, 85, 105, 0.6) !important;
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
 .dash-kpi-draggable-card {
     position: relative;
     cursor: grab;
     user-select: none;
+    border-radius: 18px !important;
+    padding: 15px 18px !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 
 .dash-kpi-draggable-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.12);
 }
 
 .dash-kpi-draggable-card:active {

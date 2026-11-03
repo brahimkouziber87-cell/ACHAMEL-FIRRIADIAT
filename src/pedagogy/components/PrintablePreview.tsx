@@ -61,6 +61,7 @@ import {
   Printer,
   Ruler,
   Scale,
+  Settings,
   Sparkles,
   Upload,
   BrainCircuit,
@@ -296,7 +297,8 @@ export type DocumentViewMarginModelId =
   | "SERIE_TD_COMPACT"
   | "DEVOIR_MAISON_BALANCED"
   | "DIAGNOSTIC_TEST"
-  | "FICHE_PEDAGOGIQUE_WIDE";
+  | "FICHE_PEDAGOGIQUE_WIDE"
+  | "REPARTITION_ANNUELLE_WIDE";
 
 export interface DocumentViewMarginModelSpec {
   id: DocumentViewMarginModelId;
@@ -421,6 +423,26 @@ export const DOC_VIEW_MARGIN_MODELS: DocumentViewMarginModelSpec[] = [
       "Marges élargies (1.0cm haut/bas · 0.9cm côtés) pour maximiser la largeur des tableaux de scénario pédagogique.",
     accentColor: "violet",
   },
+  {
+    id: "REPARTITION_ANNUELLE_WIDE",
+    labelAr: "نموذج التوزيع السنوي",
+    labelFr: "Modèle Répartition Annuelle",
+    shortBadgeAr: "توزيع سنوي · هوامش جداول عريضة (10×9mm)",
+    shortBadgeFr: "Répartition Annuelle (10×9mm)",
+    targetModule: "REPARTITION_CERTIF",
+    topMm: 10,
+    bottomMm: 10,
+    xMm: 9,
+    previewPadTopPx: 16,
+    previewPadBottomPx: 16,
+    previewPadXPx: 18,
+    verticalSpaceClass: "space-y-5",
+    descriptionAr:
+      "هوامش عريضة مخصصة لجداول التوزيع الدوري السنوي والبرمجة الزمنية للفروض والامتحانات الإشهادية مع خانات التأشير.",
+    descriptionFr:
+      "Marges optimisées pour les tableaux de répartition périodique annuelle, calendrier ministériel et visas.",
+    accentColor: "teal",
+  },
 ];
 
 export function resolveAutoDocViewMarginModel(
@@ -438,7 +460,236 @@ export function resolveAutoDocViewMarginModel(
   if (activeModule === "DIAGNOSTIC") {
     return DOC_VIEW_MARGIN_MODELS[3];
   }
+  if (activeModule === "REPARTITION_CERTIF") {
+    return DOC_VIEW_MARGIN_MODELS[5];
+  }
   return DOC_VIEW_MARGIN_MODELS[4];
+}
+
+export interface DocumentPrintScopeOption {
+  scope: "ALL" | "SUJET_ONLY" | "SOLUTIONS_ONLY" | "SPEC_GRID_ONLY";
+  codeBadge: string;
+  title: string;
+  subtitle: string;
+}
+
+export interface DocumentQuickSectionPill {
+  id: "HEADER" | "SPEC_TABLE" | "EXERCISES" | "SYNTHESIS_PROBLEM" | "SOLUTIONS";
+  label: string;
+}
+
+export interface DocumentPrintStudioProfile {
+  moduleBadge: string;
+  scopes: DocumentPrintScopeOption[];
+  quickSections: DocumentQuickSectionPill[];
+}
+
+export function resolveDocumentPrintStudioProfile(
+  activeModule: ModuleType,
+  dmSubType?: DMSubType,
+  isFr: boolean = false
+): DocumentPrintStudioProfile {
+  if (activeModule === "DS_142_08") {
+    return {
+      moduleBadge: isFr ? "Devoir Surveillé · Note 142-08" : "الفرض المحروس · مذكرة 142-08",
+      scopes: [
+        {
+          scope: "SUJET_ONLY",
+          codeBadge: "Sujet Élève",
+          title: isFr ? "📄 Sujet pour Élèves" : "📄 طباعة الفرض للتلاميذ",
+          subtitle: isFr ? "Sans corrigé ni grille" : "ورقة الأسئلة فقط بدون حلول ولا شبكة",
+        },
+        {
+          scope: "SOLUTIONS_ONLY",
+          codeBadge: "Corrigé 20/20",
+          title: isFr ? "📝 Corrigé & Barème" : "📝 عناصر الإجابة والحلول",
+          subtitle: isFr ? "Barème détaillé 0.25 pt" : "سلم النقط المفصل والخطوات (0.25 ن)",
+        },
+        {
+          scope: "SPEC_GRID_ONLY",
+          codeBadge: "Note 142-08",
+          title: isFr ? "📊 Grille de Spécification" : "📊 شبكة التخصيص 142-08",
+          subtitle: isFr ? "Tableau & Matrice Bloom 2D" : "جدول القدرات ومصفوفة بلوم للمفتش",
+        },
+        {
+          scope: "ALL",
+          codeBadge: "Dossier Complet",
+          title: isFr ? "🖨️ Dossier Pédagogique Complet" : "🖨️ العدة التربوية الكاملة",
+          subtitle: isFr ? "Sujet + Corrigé + Grille" : "الفرض + عناصر الإجابة + الشبكة",
+        },
+      ],
+      quickSections: [
+        { id: "HEADER", label: isFr ? "1. En-tête" : "1. الترويسة" },
+        { id: "SPEC_TABLE", label: isFr ? "2. Grille 142-08" : "2. جدول التخصيص" },
+        { id: "EXERCISES", label: isFr ? "3. Exercices" : "3. التمارين" },
+        { id: "SYNTHESIS_PROBLEM", label: isFr ? "4. Problème" : "4. المسألة" },
+        { id: "SOLUTIONS", label: isFr ? "5. Corrigé" : "5. عناصر الإجابة" },
+      ],
+    };
+  }
+
+  if (activeModule === "DM_SERIE") {
+    const isTD = dmSubType === "SERIE_TD";
+    return {
+      moduleBadge: isTD
+        ? isFr
+          ? "Série d'Exercices TD · Compact 8mm"
+          : "سلسلة تمارين الدعم TD · مدمج 8mm"
+        : isFr
+        ? "Devoir Maison DM · Équilibré 12mm"
+        : "الفرض المنزلي DM · متوازن 12mm",
+      scopes: [
+        {
+          scope: "SUJET_ONLY",
+          codeBadge: isTD ? "Série Élève" : "Sujet DM",
+          title: isTD
+            ? isFr
+              ? "📄 Série TD pour Élèves"
+              : "📄 طباعة السلسلة للتلاميذ"
+            : isFr
+            ? "📄 Sujet DM pour Élèves"
+            : "📄 طباعة الفرض المنزلي للتلاميذ",
+          subtitle: isFr ? "Exercices progressifs sans corrigé" : "التمارين المتدرجة ومذكرة الدرس بدون حلول",
+        },
+        {
+          scope: "SOLUTIONS_ONLY",
+          codeBadge: "Corrigé Détaillé",
+          title: isFr ? "📝 Livret de Correction" : "📝 عناصر الإجابة والحلول المفصلة",
+          subtitle: isFr ? "Méthodes et étapes de résolution" : "طرائق الحل خطوة بخطوة وتوجيهات التصحيح",
+        },
+        {
+          scope: "SPEC_GRID_ONLY",
+          codeBadge: "Auto-Évaluation",
+          title: isFr ? "📊 Grille de Suivi & Compétences" : "📊 شبكة التتبع والقدرات المستهدفة",
+          subtitle: isFr ? "Objectifs et grille d'auto-évaluation" : "جدول الدروس وشبكة التقويم الذاتي للتلميذ",
+        },
+        {
+          scope: "ALL",
+          codeBadge: "Kit TD / DM",
+          title: isFr ? "🖨️ Dossier Complet (Sujet + Corrigé)" : "🖨️ الملف الكامل (الموضوع + الحلول)",
+          subtitle: isFr ? "Série/DM + Grille + Corrigé" : "التمارين + شبكة التتبع + عناصر الإجابة",
+        },
+      ],
+      quickSections: [
+        { id: "HEADER", label: isFr ? "1. En-tête" : "1. الترويسة" },
+        { id: "SPEC_TABLE", label: isFr ? "2. Cadre & Mémo" : "2. الإطار والملخص" },
+        { id: "EXERCISES", label: isFr ? "3. Exercices" : "3. التمارين" },
+        { id: "SOLUTIONS", label: isFr ? "4. Corrigé" : "4. الحلول والشبكة" },
+      ],
+    };
+  }
+
+  if (activeModule === "FICHE_OP2007") {
+    return {
+      moduleBadge: isFr ? "Fiche Pédagogique · OP 2007" : "الجذاذة التربوية الرسمية · OP 2007",
+      scopes: [
+        {
+          scope: "SUJET_ONLY",
+          codeBadge: "Fiche Séance",
+          title: isFr ? "📄 Fiche de Séance Condensée" : "📄 جذاذة الحصة المختصرة للقسم",
+          subtitle: isFr ? "Identification + Activité + Scénario" : "التوصيف + النشاط البنائي + جدول السيناريو",
+        },
+        {
+          scope: "SOLUTIONS_ONLY",
+          codeBadge: "Cours & Preuves",
+          title: isFr ? "📝 Contenu du Cours & Exemples" : "📝 المتن النظري والأمثلة والتقويم",
+          subtitle: isFr ? "Définitions, théorèmes, preuves & TICE" : "التعاريف والمبرهنات والبراهين وأنشطة TICE",
+        },
+        {
+          scope: "SPEC_GRID_ONLY",
+          codeBadge: "Grille Inspecteur",
+          title: isFr ? "📊 Planification & Grille OP 2007" : "📊 مصفوفة التخطيط والجدول الديداكتيكي",
+          subtitle: isFr ? "Capacités, prérequis et tableau 5 phases" : "الكفايات ومصفوفة الحصص لوثيقة التفتيش",
+        },
+        {
+          scope: "ALL",
+          codeBadge: "Fiche Intégrale",
+          title: isFr ? "🖨️ Fiche Pédagogique Intégrale" : "🖨️ الجذاذة التربوية الشاملة (5 محطات)",
+          subtitle: isFr ? "Scénario complet + Cours + TICE + Éval" : "جميع المحطات الخمس + المتن النظري + TICE",
+        },
+      ],
+      quickSections: [
+        { id: "HEADER", label: isFr ? "1. En-tête" : "1. الترويسة" },
+        { id: "SPEC_TABLE", label: isFr ? "2. Identification & Plan" : "2. التوصيف والتخطيط" },
+        { id: "EXERCISES", label: isFr ? "3. Cours & Scénario" : "3. الدرس والسيناريو" },
+        { id: "SOLUTIONS", label: isFr ? "4. Évaluation & TICE" : "4. التقويم و TICE" },
+      ],
+    };
+  }
+
+  if (activeModule === "DIAGNOSTIC") {
+    return {
+      moduleBadge: isFr ? "Évaluation Diagnostique" : "الرائز التشخيصي وشبكة التفريغ",
+      scopes: [
+        {
+          scope: "SUJET_ONLY",
+          codeBadge: "Cahier Élève",
+          title: isFr ? "📄 Test Diagnostique (Élèves)" : "📄 طباعة الرائز للتلاميذ",
+          subtitle: isFr ? "QCM + Exercices + Problème" : "أسئلة QCM والتمارين والمسألة بدون حلول",
+        },
+        {
+          scope: "SOLUTIONS_ONLY",
+          codeBadge: "Corrigé & Erreurs",
+          title: isFr ? "📝 Corrigé & Analyse des Obstacles" : "📝 عناصر الإجابة وخطة الدعم",
+          subtitle: isFr ? "Grille des erreurs et remédiation" : "تصحيح الرائز وتحليل التمثلات وخطة الدعم",
+        },
+        {
+          scope: "SPEC_GRID_ONLY",
+          codeBadge: "Grille Dépouillement",
+          title: isFr ? "📊 Cadre & Grille de Dépouillement" : "📊 الإطار المرجعي وشبكة التفريغ",
+          subtitle: isFr ? "Domaines ciblés et liste de classe" : "مجالات التقويم وشبكة تفريغ نتائج القسم",
+        },
+        {
+          scope: "ALL",
+          codeBadge: "Dossier Diagnostic",
+          title: isFr ? "🖨️ Dossier Diagnostique Complet" : "🖨️ ملف التقويم التشخيصي الكامل",
+          subtitle: isFr ? "Test + Corrigé + Grille de classe" : "الرائز + عناصر الإجابة + شبكة التفريغ",
+        },
+      ],
+      quickSections: [
+        { id: "HEADER", label: isFr ? "1. En-tête" : "1. الترويسة" },
+        { id: "SPEC_TABLE", label: isFr ? "2. Cadre & Domaines" : "2. الإطار والمجالات" },
+        { id: "EXERCISES", label: isFr ? "3. QCM & Exercices" : "3. QCM والتمارين" },
+        { id: "SYNTHESIS_PROBLEM", label: isFr ? "4. Problème" : "4. المسألة" },
+        { id: "SOLUTIONS", label: isFr ? "5. Corrigé & Grille" : "5. التصحيح والتفريغ" },
+      ],
+    };
+  }
+
+  return {
+    moduleBadge: isFr ? "Répartition Annuelle & Examens" : "التوزيع الدوري السنوي والمحطات الإشهادية",
+    scopes: [
+      {
+        scope: "SUJET_ONLY",
+        codeBadge: "Programme S1 & S2",
+        title: isFr ? "📄 Répartition S1 & S2 + Visas" : "📄 توزيع دروس الدورة 1 والدورة 2",
+        subtitle: isFr ? "Tableaux des chapitres et signatures" : "جداول الوحدات الدراسية والغلاف الساعي والتأشيرات",
+      },
+      {
+        scope: "SOLUTIONS_ONLY",
+        codeBadge: "Semestre 2 & Examen",
+        title: isFr ? "📝 Semestre 2 & Examen Certificatif" : "📝 برنامج الدورة 2 والاستحقاق الإشهادي",
+        subtitle: isFr ? "Chapitres S2 et calendrier certificatif" : "تركيز الدورة الثانية والامتحان الموحد",
+      },
+      {
+        scope: "SPEC_GRID_ONLY",
+        codeBadge: "Calendrier 142-08",
+        title: isFr ? "📊 Cadre & Calendrier des DS" : "📊 الإطار الإداري وبرمجة الفروض",
+        subtitle: isFr ? "Volume horaire, coeff et jalons DS" : "الحصيص الساعي والمعامل وتواريخ الفروض المحروسة",
+      },
+      {
+        scope: "ALL",
+        codeBadge: "Répartition Complète",
+        title: isFr ? "🖨️ Répartition Annuelle Complète" : "🖨️ التوزيع السنوي الرسمي الكامل",
+        subtitle: isFr ? "Cadre + Calendrier + S1 & S2 + Visas" : "الإطار الإداري + المحطات + S1 و S2 + التوقيعات",
+      },
+    ],
+    quickSections: [
+      { id: "HEADER", label: isFr ? "1. En-tête" : "1. الترويسة" },
+      { id: "SPEC_TABLE", label: isFr ? "2. Cadre & Calendrier" : "2. الإطار والمحطات" },
+      { id: "EXERCISES", label: isFr ? "3. Semestres S1 & S2" : "3. برنامج S1 و S2" },
+    ],
+  };
 }
 
 export const LessonHeaderIconSvg: React.FC<{
@@ -802,6 +1053,43 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
   const [printScope, setPrintScope] = React.useState<
     "SUJET_ONLY" | "SOLUTIONS_ONLY" | "SPEC_GRID_ONLY" | null
   >(null);
+  const [previewScopeFilter, setPreviewScopeFilter] = React.useState<
+    "ALL" | "SUJET_ONLY" | "SOLUTIONS_ONLY" | "SPEC_GRID_ONLY"
+  >("ALL");
+  const [laserInkSaverMode, setLaserInkSaverMode] = React.useState<boolean>(false);
+  const [showAdvancedPaperSettings, setShowAdvancedPaperSettings] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    setPreviewScopeFilter("ALL");
+  }, [activeModule, dmSubType]);
+
+  const effectivePrintScope: "SUJET_ONLY" | "SOLUTIONS_ONLY" | "SPEC_GRID_ONLY" | null =
+    printScope || (previewScopeFilter === "ALL" ? null : previewScopeFilter);
+
+  const printStudioProfile = React.useMemo(
+    () =>
+      resolveDocumentPrintStudioProfile(
+        activeModule,
+        dmSubType,
+        docLang === "FR" || system === "MISSION_FRANCAISE"
+      ),
+    [activeModule, dmSubType, docLang, system]
+  );
+
+  const handleScrollToPreviewSection = React.useCallback((sectionId: string) => {
+    const sheet = document.getElementById("printable-document-sheet");
+    if (!sheet) return;
+    const target = sheet.querySelector(`[data-sync-section="${sectionId}"]`) as HTMLElement | null;
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.add("ring-2", "ring-cyan-500", "rounded-xl", "transition-all");
+      window.setTimeout(() => {
+        target.classList.remove("ring-2", "ring-cyan-500");
+      }, 1600);
+    } else {
+      sheet.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
 
   const handleQuickPedagogicalPrint = React.useCallback(
     (scope: "SUJET_ONLY" | "SOLUTIONS_ONLY" | "SPEC_GRID_ONLY" | "ALL") => {
@@ -2350,41 +2638,52 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             </div>
           )}
 
-        {/* شريط تعريف التلميذ والنقطة في الفروض والروائز */}
+        {/* شريط تعريف التلميذ والنقطة في الفروض والروائز مع خاتم المؤسسة وتأشيرتها الرسمية */}
         {(activeModule === "DS_142_08" ||
           activeModule === "DIAGNOSTIC" ||
           (activeModule === "DM_SERIE" && isDM)) &&
           (includeStudentBox || includeGradeBox) && (
-            <div className="border-t border-slate-300 bg-slate-50 px-4 py-2.5 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div className="border-t border-slate-300 bg-slate-50/90 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
               {includeStudentBox && (
-                <div className="md:col-span-2 flex flex-wrap items-center gap-4 font-semibold text-slate-800">
-                  <span>
-                    {isFr
-                      ? "Nom & Prénom : .................................................."
-                      : "الاسم والنسب: .................................................."}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-bold text-slate-800">
+                  <span className="flex items-center gap-1">
+                    <span>{isFr ? "Nom & Prénom :" : "الاسم والنسب :"}</span>
+                    <span className="moroccan-dotted-guide min-w-[160px] sm:min-w-[220px]" />
                   </span>
-                  <span>
-                    {isFr ? "Classe : ................" : "القسم: ................"}
+                  <span className="flex items-center gap-1">
+                    <span>{isFr ? "Classe :" : "القسم :"}</span>
+                    <span className="moroccan-dotted-guide min-w-[70px]" />
                   </span>
-                  <span>{isFr ? "N° : ........" : "الرقم الترتيبي: ........"}</span>
-                </div>
-              )}
-              {includeGradeBox && (
-                <div
-                  className={`font-extrabold text-indigo-950 flex items-center justify-between md:justify-end gap-4 tabular-nums ${
-                    !includeStudentBox ? "md:col-span-3" : ""
-                  }`}
-                >
-                  <span className="bg-white border border-slate-300 px-3 py-1 rounded-md text-sm">
-                    {isFr ? "Note : ........ / 20" : "النقطة: ........ / 20"}
-                  </span>
-                  <span className="text-slate-600 font-normal">
-                    {isFr ? "Appréciation : ................" : "الملاحظة: ................"}
+                  <span className="flex items-center gap-1">
+                    <span>{isFr ? "N° :" : "الرقم :"}</span>
+                    <span className="moroccan-dotted-guide min-w-[45px]" />
                   </span>
                 </div>
               )}
+
+              <div className="flex items-center gap-3">
+                {/* خاتم المؤسسة وتأشيرة الإدارة التربوية الرسمية */}
+                <div className="hidden sm:flex flex-col items-center justify-center px-2 py-0.5 border border-dashed border-slate-400 bg-white rounded-md text-[9px] text-slate-600 leading-tight">
+                  <span className="font-bold">{isFr ? "Cachet de l'établissement" : "خاتم المؤسسة وتأشيرة الإدارة"}</span>
+                  <span className="text-[7.5px] text-slate-400 font-mono">Visa de l'administration</span>
+                </div>
+
+                {includeGradeBox && (
+                  <div className="flex items-center gap-3 font-extrabold text-indigo-950 tabular-nums">
+                    <span className="bg-white border-2 border-slate-900 px-3 py-1 rounded-md text-sm font-mono shadow-2xs">
+                      {isFr ? "Note : ..... / 20" : "النقطة : ..... / 20"}
+                    </span>
+                    <span className="text-slate-600 font-normal text-[11px] hidden md:inline">
+                      {isFr ? "Appréciation : ...................." : "الملاحظة : ...................."}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
+
+        {/* الخط الأكاديمي المزدوج الفاصل للترويسة الرسمية */}
+        <div className="moroccan-academic-divider" />
 
         {/* شريط التوجيهات والتعليمات الرسمية لإجراء الاختبار (المذكرة الوزارية 142-08) */}
         {selectedConsigneKeys && selectedConsigneKeys.length > 0 && (activeModule === "DS_142_08" || activeModule === "DIAGNOSTIC") && (
@@ -2959,741 +3258,732 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
       `}</style>
 
       {/* ============================================================================
-          شريط أدوات الطباعة البيداغوجية المتخصصة (Dedicated Pedagogical Print Bar)
-          يتيح للأستاذ بضغطة زر واحدة طباعة الفرض للتلاميذ، عناصر الإجابة، أو شبكة التخصيص
+          شريط أدوات الطباعة والمعاينة البيداغوجية الذكي المتكيف مع نوع الوثيقة
+          يتيح للأستاذ معاينة أو طباعة أي نطاق من الوثيقة الحالية بضغطة زر واحدة
          ============================================================================ */}
-      <div className="no-print bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white rounded-2xl p-3 border border-indigo-500/30 shadow-lg space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-800/60 pb-2">
+      {/* ============================================================================
+          استوديو الطباعة والمعاينة البيداغوجية الموحد (Unified Educational Studio Bar)
+          تصميم موحد فائق الأناقة والهدوء، يزيل الازدحام ويجعل الورقة A4 واضحة ومباشرة
+         ============================================================================ */}
+      <div className="no-print bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white rounded-2xl p-3 border border-indigo-500/30 shadow-xl space-y-2.5">
+        {/* المستوى 1: شريط التحكم الرئيسي المنظم (Document Profile + Scope Tabs + Print Actions) */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* هوية الوثيقة الحالية ومقاس الهوامش */}
           <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-indigo-500/20 text-cyan-300 border border-cyan-400/40 flex items-center justify-center font-bold text-xs">
+            <span className="w-8 h-8 rounded-xl bg-indigo-500/20 text-cyan-300 border border-cyan-400/30 flex items-center justify-center font-bold text-sm shadow-xs">
               <Printer className="w-4 h-4" />
             </span>
             <div>
-              <div className="text-xs font-black text-white flex items-center gap-1.5">
-                <span>شريط أدوات الطباعة البيداغوجية المتخصصة (Note 142-08 & OP 2007)</span>
-                <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-mono border border-cyan-500/30">
-                  A4 ISO 216
+              <div className="text-xs font-black text-white flex flex-wrap items-center gap-1.5">
+                <span>{printStudioProfile.moduleBadge}</span>
+                <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-mono border border-cyan-500/30">
+                  A4 ISO 216 · {activeMarginModelSpec.topMm}×{activeMarginModelSpec.xMm}mm
                 </span>
                 {printScope && (
                   <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 text-[10px] font-black animate-pulse">
                     جاري إرسال {printScope} للطابعة...
                   </span>
                 )}
-              </div>
-              <p className="text-[10px] text-slate-300">
-                طباعة مباشرة فائقة النقاء بدون أي عناصر واجهة أو حواف مشوهة، مع فواصل صفحات ديداكتيكية مضبوطة
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={handleToggleA4Breaks}
-              className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
-                effectiveShowA4Breaks
-                  ? "bg-cyan-500 text-slate-950 border-cyan-400 font-black"
-                  : "bg-slate-800/90 text-slate-300 border-slate-700 hover:text-white"
-              }`}
-              title="إظهار أو إخفاء فواصل صفحات A4 الحية لمراقبة توزيع الأسئلة"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>فواصل الصفحات A4</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleToggleEconomicMode}
-              className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
-                effectiveEconomicMode
-                  ? "bg-emerald-500 text-slate-950 border-emerald-400 font-black"
-                  : "bg-slate-800/90 text-slate-300 border-slate-700 hover:text-white"
-              }`}
-              title="طباعة صفحتين A5 في ورقة A4 واحدة بالعرض لتوفير 50% من الورق ومصاريف السحب"
-            >
-              <span className="font-mono text-xs font-black">2-Up</span>
-              <span>الطباعة الاقتصادية (50% ورق)</span>
-            </button>
-          </div>
-        </div>
-
-        {/* شريط الابتكارات والمقترحات البيداغوجية المتطورة (Note 142-08 & OP 2007) */}
-        <div className="bg-slate-900/90 border border-indigo-400/30 rounded-xl p-2 text-xs text-white flex flex-wrap items-center justify-between gap-2 shadow-inner">
-          <div className="flex items-center gap-1.5 font-black text-amber-300">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>المقترحات البيداغوجية المتطورة لإدارة الفروض والتقويم:</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {onOpenCompetencyBank && (
-              <button
-                type="button"
-                onClick={onOpenCompetencyBank}
-                className="px-2.5 py-1 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-black text-[10.5px] border border-emerald-500/50 transition flex items-center gap-1 cursor-pointer active:scale-95"
-                title="فتح بنك التمارين البيداغوجي المرمز حسب الكفايات ومستويات بلوم N1/N2/N3"
-              >
-                <span>📚 بنك التمارين (بلوم)</span>
-              </button>
-            )}
-            {onOpenMassarExport && (
-              <button
-                type="button"
-                onClick={onOpenMassarExport}
-                className="px-2.5 py-1 rounded-lg bg-teal-800 hover:bg-teal-700 text-white font-black text-[10.5px] border border-teal-500/50 transition flex items-center gap-1 cursor-pointer active:scale-95"
-                title="فتح نظام تصدير النقط والملاحظات البيداغوجية لمسار Massar Excel/CSV"
-              >
-                <span>📊 تصدير مسار Massar</span>
-              </button>
-            )}
-            {onOpenDiagnosticAnalysis && (
-              <button
-                type="button"
-                onClick={onOpenDiagnosticAnalysis}
-                className="px-2.5 py-1 rounded-lg bg-indigo-800 hover:bg-indigo-700 text-white font-black text-[10.5px] border border-indigo-500/50 transition flex items-center gap-1 cursor-pointer active:scale-95"
-                title="فتح شبكة تحليل التقويم التشخيصي ورصد تعثرات القسم والفرص العلاجية"
-              >
-                <span>📈 شبكة رصد التعثرات 142-08</span>
-              </button>
-            )}
-            {onOpenBookletMode && (
-              <button
-                type="button"
-                onClick={onOpenBookletMode}
-                className="px-2.5 py-1 rounded-lg bg-sky-800 hover:bg-sky-700 text-white font-black text-[10.5px] border border-sky-500/50 transition flex items-center gap-1 cursor-pointer active:scale-95"
-                title="معاينة وطباعة الكتيب المطوي A4 إلى A5 لسلاسل التمارين والدفاتر المنزلية"
-              >
-                <span>📖 كتيب مطوي A4/A5</span>
-              </button>
-            )}
-            {onOpenInteractiveQr && (
-              <button
-                type="button"
-                onClick={onOpenInteractiveQr}
-                className="px-2.5 py-1 rounded-lg bg-purple-800 hover:bg-purple-700 text-white font-black text-[10.5px] border border-purple-500/50 transition flex items-center gap-1 cursor-pointer active:scale-95"
-                title="توليد ومعاينة كود الاستجابة السريعة التفاعلي QR للتلميحات الرقمية المتدرجة"
-              >
-                <span>📲 كود الدعم QR</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* أزرار الطباعة البيداغوجية المتخصصة بنقرة واحدة */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-0.5">
-          {/* 1. طباعة الفرض للتلاميذ */}
-          <button
-            type="button"
-            onClick={() => handleQuickPedagogicalPrint("SUJET_ONLY")}
-            className="p-2 rounded-xl bg-gradient-to-b from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white border border-indigo-400/50 shadow-md transition-all active:scale-95 text-right cursor-pointer group"
-            title="طباعة موضوع الفرض فقط للتلاميذ بدون عناصر الإجابة وبدون شبكة التخصيص"
-          >
-            <div className="flex items-center justify-between text-indigo-200 group-hover:text-white mb-1">
-              <span className="font-mono text-xs font-black">Sujet {examModel}</span>
-              <Printer className="w-3.5 h-3.5" />
-            </div>
-            <div className="font-black text-xs">📄 طباعة الفرض للتلاميذ</div>
-            <div className="text-[9.5px] text-indigo-200/90 truncate">بدون حلول ولا شبكة</div>
-          </button>
-
-          {/* 2. طباعة عناصر الإجابة وسلالم التنقيط */}
-          <button
-            type="button"
-            onClick={() => handleQuickPedagogicalPrint("SOLUTIONS_ONLY")}
-            className="p-2 rounded-xl bg-gradient-to-b from-emerald-700 to-emerald-800 hover:from-emerald-600 hover:to-emerald-700 text-white border border-emerald-400/50 shadow-md transition-all active:scale-95 text-right cursor-pointer group"
-            title="طباعة عناصر الإجابة والحلول المفصلة مع سلم التنقيط الجزئي (0.25 ن) للأستاذ والتصحيح الجماعي"
-          >
-            <div className="flex items-center justify-between text-emerald-200 group-hover:text-white mb-1">
-              <span className="font-mono text-xs font-black">Corrigé 20/20</span>
-              <CheckCircle2 className="w-3.5 h-3.5" />
-            </div>
-            <div className="font-black text-xs">📝 عناصر الإجابة والحلول</div>
-            <div className="text-[9.5px] text-emerald-200/90 truncate">سلم النقط والخطوات</div>
-          </button>
-
-          {/* 3. طباعة شبكة التخصيص للمفتش */}
-          <button
-            type="button"
-            onClick={() => handleQuickPedagogicalPrint("SPEC_GRID_ONLY")}
-            className="p-2 rounded-xl bg-gradient-to-b from-purple-800 to-purple-900 hover:from-purple-700 hover:to-purple-800 text-white border border-purple-400/50 shadow-md transition-all active:scale-95 text-right cursor-pointer group"
-            title="طباعة شبكة التخصيص والمطابقة 142-08 ومصفوفة بلوم 2D للمفتش التربوي وملف التقويم"
-          >
-            <div className="flex items-center justify-between text-purple-200 group-hover:text-white mb-1">
-              <span className="font-mono text-xs font-black">Note 142-08</span>
-              <Scale className="w-3.5 h-3.5" />
-            </div>
-            <div className="font-black text-xs">📊 شبكة التخصيص 142-08</div>
-            <div className="text-[9.5px] text-purple-200/90 truncate">المصفوفة والقدرات للمفتش</div>
-          </button>
-
-          {/* 4. طباعة الجذاذة التربوية الرسمية */}
-          <button
-            type="button"
-            onClick={() => {
-              if (onSwitchDocumentViewModel) {
-                onSwitchDocumentViewModel("FICHE_OP2007");
-              }
-              setTimeout(() => window.print(), 250);
-            }}
-            className="p-2 rounded-xl bg-gradient-to-b from-amber-700 to-amber-800 hover:from-amber-600 hover:to-amber-700 text-white border border-amber-400/50 shadow-md transition-all active:scale-95 text-right cursor-pointer group"
-            title="طباعة الجذاذة البيداغوجية الرسمية للحصة أو المقطع التعلمي وفق التوجيهات التربوية OP 2007"
-          >
-            <div className="flex items-center justify-between text-amber-200 group-hover:text-white mb-1">
-              <span className="font-mono text-xs font-black">Fiche OP 2007</span>
-              <BookOpen className="w-3.5 h-3.5" />
-            </div>
-            <div className="font-black text-xs">📚 الجذاذة التربوية</div>
-            <div className="text-[9.5px] text-amber-200/90 truncate">السيناريو والأنشطة</div>
-          </button>
-
-          {/* 5. طباعة سلسلة التمارين / الفرض المنزلي */}
-          <button
-            type="button"
-            onClick={() => {
-              if (onSwitchDocumentViewModel) {
-                onSwitchDocumentViewModel("DM_SERIE", "SERIE_TD");
-              }
-              setTimeout(() => window.print(), 250);
-            }}
-            className="p-2 rounded-xl bg-gradient-to-b from-teal-800 to-teal-900 hover:from-teal-700 hover:to-teal-800 text-white border border-teal-400/50 shadow-md transition-all active:scale-95 text-right cursor-pointer group"
-            title="طباعة سلسلة تمارين الدعم أو الفرض المنزلي بتنسيق مدمج عالي الكثافة (8×8mm)"
-          >
-            <div className="flex items-center justify-between text-teal-200 group-hover:text-white mb-1">
-              <span className="font-mono text-xs font-black">TD / DM</span>
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-            </div>
-            <div className="font-black text-xs">📑 سلسلة التمارين / DM</div>
-            <div className="text-[9.5px] text-teal-200/90 truncate">كثافة عالية واقتصاد الورق</div>
-          </button>
-
-          {/* 6. طباعة الملف التربوي الكامل المتكامل */}
-          <button
-            type="button"
-            onClick={() => handleQuickPedagogicalPrint("ALL")}
-            className="p-2 rounded-xl bg-gradient-to-b from-cyan-600 to-sky-700 hover:from-cyan-500 hover:to-sky-600 text-slate-950 font-black border border-cyan-300 shadow-md transition-all active:scale-95 text-right cursor-pointer group"
-            title="طباعة العدة التربوية الشاملة (الفرض + عناصر الإجابة + شبكة التخصيص 142-08) بصفحات متتالية منظمة"
-          >
-            <div className="flex items-center justify-between text-slate-900 mb-1">
-              <span className="font-mono text-xs font-black">Kit Complet</span>
-              <Printer className="w-3.5 h-3.5" />
-            </div>
-            <div className="font-black text-xs">🖨️ العدة التربوية الكاملة</div>
-            <div className="text-[9.5px] text-slate-900/90 truncate">الفرض + الحل + شبكة 142-08</div>
-          </button>
-        </div>
-      </div>
-
-      {/* شريط تجويد المعاينة الحية وحزم LaTeX الاحترافية + مختبر WolframAlpha */}
-      <div className="no-print bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 shadow-xs space-y-2.5">
-        {/* شريط التبديل الفوري بين نماذج عرض الوثيقة والضبط التلقائي للهوامش (نموذج الفرض المحروس مقابل نموذج سلسلة التمارين وغيرها) */}
-        <div className="bg-gradient-to-l from-indigo-50/90 via-slate-50 to-emerald-50/70 border border-indigo-200/80 rounded-xl p-2.5 space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-950 text-amber-300 shadow-2xs">
-                <Layers className="w-3.5 h-3.5" />
-              </span>
-              <div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11.5px] font-black text-slate-900">
-                    نماذج العرض والضبط التلقائي للهوامش (A4 Auto-Margins):
+                {previewScopeFilter !== "ALL" && !printScope && (
+                  <span className="px-2 py-0.5 rounded bg-emerald-400 text-slate-950 text-[10px] font-black">
+                    معاينة مفلترة: {previewScopeFilter}
                   </span>
-                  <span className="px-2 py-0.5 rounded-md bg-indigo-950 text-amber-300 font-mono text-[10px] font-bold">
-                    {isFr ? activeMarginModelSpec.shortBadgeFr : activeMarginModelSpec.shortBadgeAr}
-                  </span>
-                  {effectiveMarginOverride ? (
-                    <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[9.5px] font-extrabold">
-                      تخصيص يدوي مفعّل
-                    </span>
-                  ) : (
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300 text-[9.5px] font-extrabold">
-                      مقترن تلقائياً بالوثيقة
-                    </span>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-600 font-medium mt-0.5">
-                  {isFr ? activeMarginModelSpec.descriptionFr : activeMarginModelSpec.descriptionAr}
-                </p>
+                )}
               </div>
-            </div>
-
-            {/* مؤشرات القياس الحي للهوامش والمساحة الصافية للطباعة */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <div
-                className="px-2 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-mono font-bold text-slate-700 flex items-center gap-1.5 shadow-2xs"
-                title="المساحة الصافية للطباعة داخل ورقة A4 ونسبة استغلال الورقة"
-              >
-                <span className="text-indigo-700 font-extrabold">
-                  المساحة الصافية: {safePrintWidthMm}×{safePrintHeightMm}mm
-                </span>
-                <span className="text-slate-300">|</span>
-                <span className="text-emerald-700 font-extrabold">
-                  استغلال A4: {printableAreaUtilizationPct}%
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowMarginGuides((v) => !v)}
-                className={`px-2 py-1 rounded-lg text-[10px] font-extrabold border transition-all cursor-pointer flex items-center gap-1 ${
-                  showMarginGuides
-                    ? "bg-cyan-900 text-cyan-100 border-cyan-800 shadow-2xs"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-cyan-50 hover:border-cyan-300"
-                }`}
-                title="إظهار أو إخفاء خطوط حدود الهوامش الحية بالـ mm فوق الورقة"
-              >
-                <Compass className="w-3 h-3 text-cyan-500" />
-                <span>معاينة حدود الهوامش</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowCustomMarginSliders((v) => !v)}
-                className={`px-2 py-1 rounded-lg text-[10px] font-extrabold border transition-all cursor-pointer flex items-center gap-1 ${
-                  showCustomMarginSliders
-                    ? "bg-indigo-900 text-amber-200 border-indigo-800 shadow-2xs"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-indigo-50 hover:border-indigo-300"
-                }`}
-                title="ضبط يدوي دقيق للهوامش بالمليمتر (mm)"
-              >
-                <span>ضبط دقيق (mm)</span>
-              </button>
             </div>
           </div>
 
-          {/* أزرار التبديل السريع بين النماذج (نموذج الفرض المحروس مقابل نموذج سلسلة التمارين وبقية النماذج) */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-100/80">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {DOC_VIEW_MARGIN_MODELS.map((model) => {
-                const isSelected = activeMarginModelSpec.id === model.id;
-                const isPrimaryPair =
-                  model.id === "DS_EXAM_OFFICIAL" || model.id === "SERIE_TD_COMPACT";
-                return (
-                  <button
-                    key={model.id}
-                    type="button"
-                    onClick={() => handleSelectDocumentViewModel(model)}
-                    title={isFr ? model.descriptionFr : model.descriptionAr}
-                    className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                      isSelected
-                        ? model.id === "SERIE_TD_COMPACT"
-                          ? "bg-emerald-900 text-amber-200 border-emerald-800 shadow-xs ring-2 ring-emerald-400/60"
-                          : "bg-indigo-950 text-amber-300 border-indigo-900 shadow-xs ring-2 ring-indigo-400/60"
-                        : isPrimaryPair
-                        ? "bg-white text-slate-800 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/60 shadow-2xs"
-                        : "bg-white/80 text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-white"
-                    }`}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        isSelected
-                          ? "bg-amber-300"
-                          : model.id === "DS_EXAM_OFFICIAL"
-                          ? "bg-indigo-600"
-                          : model.id === "SERIE_TD_COMPACT"
-                          ? "bg-emerald-600"
-                          : model.id === "DEVOIR_MAISON_BALANCED"
-                          ? "bg-amber-500"
-                          : model.id === "DIAGNOSTIC_TEST"
-                          ? "bg-cyan-600"
-                          : "bg-violet-600"
-                      }`}
-                    />
-                    <span>{isFr ? model.labelFr : model.labelAr}</span>
-                    <span
-                      className={`font-mono text-[9.5px] px-1.5 py-0.2 rounded ${
-                        isSelected
-                          ? "bg-black/25 text-amber-100"
-                          : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {model.topMm}×{model.xMm}mm
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* خيار ربط التبديل بنوع الوثيقة أو تطبيق الهوامش فقط */}
-            <div className="flex items-center gap-2">
-              {onSwitchDocumentViewModel && (
-                <label
-                  className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-700 bg-white/90 px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer select-none"
-                  title="عند التفعيل، يؤدي النقر على النموذج إلى تبديل نوع الوثيقة ومحتواها مع ضبط الهوامش تلقائياً. وعند الإلغاء، يتم تطبيق هوامش النموذج فقط على الوثيقة الحالية."
-                >
-                  <input
-                    type="checkbox"
-                    checked={syncDocTypeOnModelClick}
-                    onChange={(e) => setSyncDocTypeOnModelClick(e.target.checked)}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
-                  />
-                  <span>تبديل نوع الوثيقة والهوامش معاً</span>
-                </label>
-              )}
-
-              {effectiveMarginOverride && (
-                <button
-                  type="button"
-                  onClick={() => updateMarginOverride(null)}
-                  className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-extrabold cursor-pointer transition-colors"
-                  title="إعادة الضبط إلى الهوامش التلقائية المقترنة بنوع الوثيقة الحالي"
-                >
-                  استعادة الضبط التلقائي
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* لوحة أشرطة التمرير للضبط اليدوي الدقيق للهوامش بالمليمتر (mm) */}
-          {showCustomMarginSliders && (
-            <div className="pt-2 border-t border-indigo-200/70 grid grid-cols-1 md:grid-cols-4 gap-2.5 items-center bg-white/90 rounded-xl p-2.5">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-700">
-                  <span>الهامش العلوي (Top):</span>
-                  <span className="font-mono text-indigo-700">
-                    {activeMarginModelSpec.topMm} mm (
-                    {(activeMarginModelSpec.topMm / 10).toFixed(1)} cm)
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={5}
-                  max={25}
-                  step={1}
-                  value={activeMarginModelSpec.topMm}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    updateMarginOverride({
-                      topMm: val,
-                      bottomMm: activeMarginModelSpec.bottomMm,
-                      xMm: activeMarginModelSpec.xMm,
-                      modelId: activeMarginModelSpec.id,
-                    });
-                  }}
-                  className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-700">
-                  <span>الهامش السفلي (Bottom):</span>
-                  <span className="font-mono text-indigo-700">
-                    {activeMarginModelSpec.bottomMm} mm (
-                    {(activeMarginModelSpec.bottomMm / 10).toFixed(1)} cm)
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={5}
-                  max={25}
-                  step={1}
-                  value={activeMarginModelSpec.bottomMm}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    updateMarginOverride({
-                      topMm: activeMarginModelSpec.topMm,
-                      bottomMm: val,
-                      xMm: activeMarginModelSpec.xMm,
-                      modelId: activeMarginModelSpec.id,
-                    });
-                  }}
-                  className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-700">
-                  <span>الهامش الجانبي (Left/Right):</span>
-                  <span className="font-mono text-emerald-700">
-                    {activeMarginModelSpec.xMm} mm (
-                    {(activeMarginModelSpec.xMm / 10).toFixed(1)} cm)
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={5}
-                  max={25}
-                  step={1}
-                  value={activeMarginModelSpec.xMm}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    updateMarginOverride({
-                      topMm: activeMarginModelSpec.topMm,
-                      bottomMm: activeMarginModelSpec.bottomMm,
-                      xMm: val,
-                      modelId: activeMarginModelSpec.id,
-                    });
-                  }}
-                  className="w-full accent-emerald-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
-                />
-              </div>
-
-              <div className="bg-slate-900 text-slate-100 rounded-lg p-2 font-mono text-[9.5px] leading-relaxed">
-                <div className="text-amber-300 font-bold mb-0.5">
-                  LaTeX / Typst Sync:
-                </div>
-                <div className="truncate">
-                  \geometry&#123;top={(activeMarginModelSpec.topMm / 10).toFixed(1)}cm,
-                  bottom={(activeMarginModelSpec.bottomMm / 10).toFixed(1)}cm, x=
-                  {(activeMarginModelSpec.xMm / 10).toFixed(1)}cm&#125;
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* شريط الفحص والضبط التلقائي لتخطيط A4 ومنع تجاوز الصفحات + رمز QR في تذييل PDF */}
-          <div className="mt-2 pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-extrabold border ${
-                  a4LayoutReport.hasTrailingOrphanOverflow || a4LayoutReport.hasHorizontalOverflow
-                    ? "bg-amber-50 text-amber-900 border-amber-300"
-                    : "bg-emerald-50 text-emerald-900 border-emerald-200"
-                }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    a4LayoutReport.hasTrailingOrphanOverflow || a4LayoutReport.hasHorizontalOverflow
-                      ? "bg-amber-500 animate-pulse"
-                      : "bg-emerald-500"
-                  }`}
-                />
-                <span>
-                  {a4LayoutReport.hasTrailingOrphanOverflow
-                    ? `تنبيه تجاوز A4: صفحة ${a4LayoutReport.rawPageCount} ممتلئة بـ ${a4LayoutReport.lastPageFillPercentBefore}% فقط`
-                    : a4LayoutReport.hasHorizontalOverflow
-                    ? `تنبيه عرض A4: تجاوز أفقي بمقدار ${a4LayoutReport.horizontalOverflowPx}px`
-                    : `تخطيط A4 متوازن للطباعة (${a4LayoutReport.rawPageCount} ص · امتلاء ${a4LayoutReport.lastPageFillPercentBefore}%)`}
-                </span>
-              </span>
-
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 font-mono text-[10px]">
-                هوامش PDF التلقائية: {a4LayoutReport.recommendedMarginMm}mm
-              </span>
-
-              {autoFitCompactionScale < 1 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 font-bold text-[10px]">
-                  ضغط ذكي نشط: {Math.round(autoFitCompactionScale * 100)}%
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={handleApplyAutoA4LayoutFit}
-                className="px-2.5 py-1 rounded-lg text-[10.5px] font-black bg-indigo-600 hover:bg-indigo-500 text-white shadow-2xs transition-all cursor-pointer flex items-center gap-1"
-                title="ضبط الهوامش والمسافات تلقائياً لمنع تجاوز الصفحات وتأمين هوامش طباعة A4 مثالية"
-              >
-                <Sparkles className="w-3 h-3" />
-                <span>ضبط تلقائي لصفحات A4 (Auto-Fit)</span>
-              </button>
-
-              {autoFitCompactionScale < 1 && (
-                <button
-                  type="button"
-                  onClick={() => setAutoFitCompactionScale(1)}
-                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 cursor-pointer"
-                >
-                  إلغاء الضغط
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={handleToggleInteractiveQr}
-                className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                  effectiveIncludeInteractiveQr
-                    ? "bg-emerald-900 text-emerald-100 border-emerald-800"
-                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
-                }`}
-                title="تضمين رمز QR للاختبار التفاعلي تلقائياً في تذييل كل صفحة عند تصدير PDF"
-              >
-                <QrCode className="w-3 h-3" />
-                <span>
-                  {effectiveIncludeInteractiveQr
-                    ? "QR تفاعلي بتذييل PDF: مفعّل"
-                    : "QR تفاعلي بتذييل PDF: معطّل"}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {/* اختيار حزمة تنسيق LaTeX المباشرة */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-extrabold text-slate-700 flex items-center gap-1 px-1.5">
-              <Code2 className="w-3.5 h-3.5 text-indigo-600" />
-              حزمة تنسيق LaTeX:
-            </span>
-            {LATEX_PACKAGE_OPTIONS.map((pkg) => {
-              const isActive = latexPackageTheme === pkg.id;
+          {/* تبويبات النطاق البيداغوجي المباشر (Segmented Document Scope Control) */}
+          <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-indigo-500/30 shadow-inner">
+            {printStudioProfile.scopes.map((sc) => {
+              const isSelected = previewScopeFilter === sc.scope;
               return (
                 <button
-                  key={pkg.id}
+                  key={`scope-tab-${sc.scope}`}
                   type="button"
-                  onClick={() => onChangeLatexPackageTheme?.(pkg.id)}
-                  title={isFr ? pkg.descriptionFr : pkg.descriptionAr}
-                  className={`px-2.5 py-1 rounded-xl font-mono text-[11px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                    isActive
-                      ? "bg-indigo-950 text-amber-300 border-indigo-900 shadow-xs ring-1 ring-indigo-400"
-                      : "bg-slate-50 text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40"
+                  onClick={() => {
+                    setPreviewScopeFilter(sc.scope);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isSelected
+                      ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-xs font-black"
+                      : "text-slate-300 hover:text-white hover:bg-slate-800/80"
                   }`}
+                  title={`${sc.title} — ${sc.subtitle}`}
                 >
-                  <span>{pkg.badge}</span>
+                  <span className="font-mono text-[10px] opacity-75">{sc.codeBadge}</span>
+                  <span>{sc.title}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* اختيار خامة الورق ومسطرة الهوامش وفواصل الصفحات */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* خامة الورق */}
-            <div className="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
-              {PAPER_SURFACE_OPTIONS.map((surf) => (
-                <button
-                  key={surf.id}
-                  type="button"
-                  onClick={() => onChangePaperSurface?.(surf.id)}
-                  className={`px-2 py-1 rounded-lg text-[10.5px] font-bold transition-colors cursor-pointer ${
-                    paperSurface === surf.id
-                      ? "bg-white text-indigo-950 shadow-2xs font-black"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                  title={isFr ? surf.labelFr : surf.labelAr}
-                >
-                  {surf.id === "PLAIN_WHITE"
-                    ? "أبيض A4"
-                    : surf.id === "MILLIMETER_GRID"
-                    ? "مليمتري"
-                    : surf.id === "SEYES_FRENCH"
-                    ? "دفتر Seyès"
-                    : "عاجي"}
-                </button>
-              ))}
-            </div>
-
-            {/* مسطرة A4 القياسية */}
+          {/* أزرار الإجراءات الفورية: الطباعة وتوفير الحبر وفتح الدرج */}
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setShowMarginGuides(!showMarginGuides)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border flex items-center gap-1 transition-colors cursor-pointer ${
-                showMarginGuides
-                  ? "bg-cyan-900 text-cyan-100 border-cyan-800"
-                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-              }`}
-              title="إظهار مسطرة القياس المليمترية وهوامش الطباعة القياسية A4"
+              onClick={() => handleQuickPedagogicalPrint(previewScopeFilter)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 hover:from-cyan-300 hover:to-indigo-300 text-slate-950 font-black text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              title="طباعة النطاق المعروض حالياً على ورق A4 بهوامش دقيقة ومنضبطة (Ctrl + P)"
             >
-              <Ruler className="w-3.5 h-3.5" />
-              <span>مسطرة A4</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>طباعة فورية</span>
             </button>
 
-            {/* فواصل A4 الحية */}
             <button
               type="button"
-              onClick={handleToggleA4Breaks}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border flex items-center gap-1 transition-colors cursor-pointer ${
-                effectiveShowA4Breaks
-                  ? "bg-cyan-900 text-cyan-200 border-cyan-800 shadow-xs"
-                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              onClick={() => setLaserInkSaverMode((v) => !v)}
+              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                laserInkSaverMode
+                  ? "bg-amber-400 text-slate-950 border-amber-300 font-black shadow-xs"
+                  : "bg-slate-800/90 text-slate-200 border-slate-700 hover:text-white hover:bg-slate-800"
               }`}
-              title="إظهار فواصل الصفحات الحية A4 لمعرفة حدود الصفحة 1 و 2 وتفادي تقطيع الجداول"
+              title="وضع توفير حبر الطابعة الليزرية وسحب النسخ المدرسي بالأبيض والأسود"
             >
-              <Layers className="w-3.5 h-3.5 text-cyan-600" />
-              <span>فواصل A4</span>
+              <span>🖨️</span>
+              <span className="hidden sm:inline">
+                {laserInkSaverMode ? "توفير الحبر: مفعّل" : "توفير الحبر"}
+              </span>
             </button>
 
-            {/* الطباعة الاقتصادية 2-في-1 */}
             <button
               type="button"
-              onClick={handleToggleEconomicMode}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border flex items-center gap-1 transition-colors cursor-pointer ${
-                effectiveEconomicMode
-                  ? "bg-emerald-900 text-emerald-200 border-emerald-800 shadow-xs"
-                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              onClick={() => setShowAdvancedPaperSettings((v) => !v)}
+              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black border transition cursor-pointer flex items-center gap-1.5 ${
+                showAdvancedPaperSettings
+                  ? "bg-amber-400 text-slate-950 border-amber-300 shadow-xs"
+                  : "bg-slate-800/90 text-cyan-200 border-slate-700 hover:bg-slate-800"
               }`}
-              title="الطباعة الاقتصادية 2-في-1 (صفحتين A5 في ورقة A4 واحدة بالعرض) لخفض مصاريف السحب بنسبة 50%"
+              title="فتح درج أدوات الهندسة البيداغوجية، قوالب الهوامش، تصدير مسار، وكتيب A5"
             >
-              <span className="font-mono text-xs font-black">2-Up</span>
-              <span>طباعة 2-في-1</span>
-            </button>
-
-            {/* مكتبة منحنيات الباكالوريا */}
-            {onAddFigure && (
-              <button
-                type="button"
-                onClick={() => setShowBacCurvesLibrary((v) => !v)}
-                className={`px-2.5 py-1 rounded-xl text-[11px] font-black shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer border ${
-                  showBacCurvesLibrary
-                    ? "bg-amber-600 text-white border-amber-500"
-                    : "bg-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300"
-                }`}
-                title="مكتبة منحنيات الباكالوريا الجاهزة بدقة Vector SVG و TikZ (ln, exp, المتتاليات، الأعداد العقدية)"
-              >
-                <ImageIcon className="w-3.5 h-3.5 text-amber-700" />
-                <span>منحنيات الباكالوريا</span>
-              </button>
-            )}
-
-            {/* زر إظهار/إخفاء رمز QR للنسخة التفاعلية أسفل الوثيقة */}
-            <button
-              type="button"
-              onClick={handleToggleInteractiveQr}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border flex items-center gap-1.5 transition-colors cursor-pointer ${
-                effectiveIncludeInteractiveQr
-                  ? "bg-indigo-900 text-amber-300 border-indigo-800 shadow-xs"
-                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-              }`}
-              title="إدراج رمز الاستجابة السريعة (QR Code) للنسخة التفاعلية الرقمية للفرض في أسفل وثيقة PDF"
-            >
-              <QrCode className="w-3.5 h-3.5" />
-              <span>رمز QR التفاعلي</span>
+              <Settings className="w-3.5 h-3.5" />
+              <span>{showAdvancedPaperSettings ? "إغلاق الضبط ▲" : "أدوات وضبط متقدم ▼"}</span>
             </button>
           </div>
         </div>
 
-        {/* محاكي الزمن الحقيقي لإنجاز الفرض (قاعدة 1 × 3 بين الأستاذ والتلميذ) */}
-        {activeModule === "DS_142_08" && (
-          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-900 text-white text-[11px] border border-slate-700">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-black text-amber-300 flex items-center gap-1.5">
-                <span>⏱️ محاكي زمن الإنجاز (قاعدة 1×3) :</span>
+        {/* المستوى 2: شريط مدمج وهادئ (Section Jumps + A4 Balance + Time Balance) */}
+        <div className="bg-slate-900/90 border border-indigo-500/20 rounded-xl px-2.5 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+          {/* الانتقال السريع لأقسام الورقة الحالية */}
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-[10.5px] font-bold text-slate-400 pl-1">
+              انتقال سريع:
+            </span>
+            {printStudioProfile.quickSections.map((sec) => (
+              <button
+                key={`jump-sec-${sec.id}`}
+                type="button"
+                onClick={() => handleScrollToPreviewSection(sec.id)}
+                className="px-2 py-0.5 rounded-md bg-indigo-950 hover:bg-indigo-800 text-cyan-200 hover:text-white border border-indigo-700/50 text-[10.5px] font-bold transition cursor-pointer"
+              >
+                {sec.label}
+              </button>
+            ))}
+          </div>
+
+          {/* مؤشرات التوازن البيداغوجي A4 والزمن */}
+          <div className="flex flex-wrap items-center gap-2 text-[10.5px]">
+            <span
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg font-bold border ${
+                a4LayoutReport.hasTrailingOrphanOverflow || a4LayoutReport.hasHorizontalOverflow
+                  ? "bg-amber-950/80 text-amber-200 border-amber-500/40"
+                  : "bg-emerald-950/80 text-emerald-200 border-emerald-500/40"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  a4LayoutReport.hasTrailingOrphanOverflow || a4LayoutReport.hasHorizontalOverflow
+                    ? "bg-amber-400 animate-pulse"
+                    : "bg-emerald-400"
+                }`}
+              />
+              <span>
+                {a4LayoutReport.hasTrailingOrphanOverflow
+                  ? `تجاوز A4: ص ${a4LayoutReport.rawPageCount} (${a4LayoutReport.lastPageFillPercentBefore}%)`
+                  : `تخطيط A4 متوازن (${a4LayoutReport.rawPageCount} ص · ${printableAreaUtilizationPct}% استغلال)`}
               </span>
-              <span className="font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                زمن الأستاذ: <strong className="text-cyan-300">{examTimeBalance.teacherMinutes} د</strong>
+            </span>
+
+            {activeModule === "DS_142_08" && (
+              <span className="inline-flex items-center gap-1 text-slate-300 font-mono">
+                <span>⏱️ زمن الإنجاز:</span>
+                <strong className="text-amber-300">{examTimeBalance.estimatedStudentMinutes} د</strong>
+                <span className="text-slate-500">/</span>
+                <span className="text-white">{examTimeBalance.officialMinutes} د</span>
               </span>
-              <span className="font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                زمن المترشح المتوقع: <strong className="text-amber-300">{examTimeBalance.estimatedStudentMinutes} د</strong>
-              </span>
-              <span className="font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                الحصيص الرسمي: <strong className="text-white">{examTimeBalance.officialMinutes} د</strong>
-              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={handleToggleA4Breaks}
+              className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition cursor-pointer flex items-center gap-1 ${
+                effectiveShowA4Breaks
+                  ? "bg-cyan-500 text-slate-950 border-cyan-400"
+                  : "bg-slate-800 text-slate-300 border-slate-700 hover:text-white"
+              }`}
+              title="إظهار أو إخفاء فواصل صفحات A4 الحية"
+            >
+              <Layers className="w-3 h-3" />
+              <span>فواصل A4</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleToggleEconomicMode}
+              className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition cursor-pointer flex items-center gap-1 ${
+                effectiveEconomicMode
+                  ? "bg-emerald-500 text-slate-950 border-emerald-400"
+                  : "bg-slate-800 text-slate-300 border-slate-700 hover:text-white"
+              }`}
+              title="طباعة صفحتين A5 في ورقة A4 واحدة بالعرض لتوفير الورق"
+            >
+              <span className="font-mono text-[9px] font-black">2-Up</span>
+              <span>اقتصادي</span>
+            </button>
+          </div>
+        </div>
+
+        {/* المستوى 3: درج الأدوات المتقدمة وقوالب الهوامش (يظهر فقط عند النقر لتوفير المساحة) */}
+        {showAdvancedPaperSettings && (
+          <div className="bg-slate-950/90 rounded-xl p-3 border border-indigo-500/30 space-y-3 pt-3">
+            {/* أ. شريط نماذج الهوامش البيداغوجية والضبط التلقائي Auto-Fit */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/60 pb-2 text-[11px]">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-cyan-300 font-black flex items-center gap-1">
+                  <Ruler className="w-3.5 h-3.5" />
+                  <span>نماذج هوامش A4 :</span>
+                </span>
+                {DOC_VIEW_MARGIN_MODELS.map((model) => {
+                  const isSelected = activeMarginModelSpec.id === model.id;
+                  return (
+                    <button
+                      key={model.id}
+                      type="button"
+                      onClick={() => handleSelectDocumentViewModel(model)}
+                      title={isFr ? model.descriptionFr : model.descriptionAr}
+                      className={`px-2 py-1 rounded-lg text-[10.5px] font-bold border transition cursor-pointer flex items-center gap-1 ${
+                        isSelected
+                          ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 border-cyan-300 shadow-2xs font-black"
+                          : "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white"
+                      }`}
+                    >
+                      <span>{isFr ? model.labelFr : model.labelAr}</span>
+                      <span className="font-mono text-[9px] opacity-75">
+                        ({model.topMm}×{model.xMm})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleApplyAutoA4LayoutFit}
+                  className="px-2.5 py-1 rounded-lg text-[10.5px] font-black bg-indigo-600 hover:bg-indigo-500 text-white shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+                  title="ضبط الهوامش والمسافات تلقائياً لمنع تجاوز الصفحات"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>ضبط تلقائي A4 (Auto-Fit)</span>
+                </button>
+
+                {autoFitCompactionScale < 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setAutoFitCompactionScale(1)}
+                    className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 cursor-pointer"
+                  >
+                    إلغاء الضغط ({Math.round(autoFitCompactionScale * 100)}%)
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowMarginGuides((v) => !v)}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer flex items-center gap-1 ${
+                    showMarginGuides
+                      ? "bg-cyan-500 text-slate-950 border-cyan-400"
+                      : "bg-slate-800 text-slate-300 border-slate-700 hover:text-white"
+                  }`}
+                  title="إظهار أو إخفاء خطوط مسطرة الهوامش"
+                >
+                  <Compass className="w-3 h-3" />
+                  <span>مسطرة الهوامش</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-2.5 py-0.5 rounded-full font-extrabold text-[10.5px] ${
-                  examTimeBalance.status === "OPTIMAL"
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                    : examTimeBalance.status === "DENSE"
-                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                    : examTimeBalance.status === "OVERLOAD"
-                    ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                    : "bg-sky-500/20 text-sky-300 border border-sky-500/40"
-                }`}
-              >
-                {examTimeBalance.status === "OPTIMAL"
-                  ? "✓ توازن زمني مثالي"
-                  : examTimeBalance.status === "DENSE"
-                  ? "⚠️ فرض مكثف"
-                  : examTimeBalance.status === "OVERLOAD"
-                  ? "🚨 يتجاوز الحصيص الزمني"
-                  : "ℹ️ فرض خفيف"}
-              </span>
-              <span className="text-[10.5px] text-slate-300 hidden xl:inline">
-                {isFr ? examTimeBalance.adviceFr : examTimeBalance.adviceAr}
-              </span>
+            {/* ب. الأدوات التربوية التكميلية والتبديل بين أنواع الوثائق */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-900/60 pb-2 text-[11px]">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-amber-300 font-black pl-1">أدوات تكميلية:</span>
+                {onOpenCompetencyBank && (
+                  <button
+                    type="button"
+                    onClick={onOpenCompetencyBank}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-900/80 hover:bg-emerald-800 text-emerald-100 font-bold border border-emerald-500/40 transition cursor-pointer"
+                  >
+                    📚 بنك التمارين (بلوم)
+                  </button>
+                )}
+                {onOpenMassarExport && (
+                  <button
+                    type="button"
+                    onClick={onOpenMassarExport}
+                    className="px-2.5 py-1 rounded-lg bg-teal-900/80 hover:bg-teal-800 text-teal-100 font-bold border border-teal-500/40 transition cursor-pointer"
+                  >
+                    📊 تصدير مسار Massar
+                  </button>
+                )}
+                {onOpenDiagnosticAnalysis && (
+                  <button
+                    type="button"
+                    onClick={onOpenDiagnosticAnalysis}
+                    className="px-2.5 py-1 rounded-lg bg-indigo-900/80 hover:bg-indigo-800 text-indigo-100 font-bold border border-indigo-500/40 transition cursor-pointer"
+                  >
+                    📈 رصد التعثرات 142-08
+                  </button>
+                )}
+                {onOpenBookletMode && (
+                  <button
+                    type="button"
+                    onClick={onOpenBookletMode}
+                    className="px-2.5 py-1 rounded-lg bg-sky-900/80 hover:bg-sky-800 text-sky-100 font-bold border border-sky-500/40 transition cursor-pointer"
+                  >
+                    📖 كتيب مطوي A4/A5
+                  </button>
+                )}
+                {onOpenInteractiveQr && (
+                  <button
+                    type="button"
+                    onClick={onOpenInteractiveQr}
+                    className="px-2.5 py-1 rounded-lg bg-purple-900/80 hover:bg-purple-800 text-purple-100 font-bold border border-purple-500/40 transition cursor-pointer"
+                  >
+                    📲 كود الدعم QR
+                  </button>
+                )}
+                {onAddFigure && (
+                  <button
+                    type="button"
+                    onClick={() => setShowBacCurvesLibrary((v) => !v)}
+                    className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition cursor-pointer border ${
+                      showBacCurvesLibrary
+                        ? "bg-amber-500 text-slate-950 border-amber-400 font-black"
+                        : "bg-slate-800 text-amber-200 border-slate-700 hover:text-white"
+                    }`}
+                  >
+                    <ImageIcon className="w-3 h-3" />
+                    <span>منحنيات البكالوريا</span>
+                  </button>
+                )}
+              </div>
+
+              {/* تبديل فوري لنوع الوثيقة الحالية */}
+              {onSwitchDocumentViewModel && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-slate-400 font-bold">تبديل سريع:</span>
+                  <button
+                    type="button"
+                    onClick={() => onSwitchDocumentViewModel(activeModule === "FICHE_OP2007" ? "DS_142_08" : "FICHE_OP2007")}
+                    className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-200 border border-slate-700 text-[10.5px] font-bold cursor-pointer"
+                  >
+                    {activeModule === "FICHE_OP2007" ? "📄 الفرض المحروس" : "📚 الجذاذة التربوية"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activeModule === "DM_SERIE") onSwitchDocumentViewModel("REPARTITION_CERTIF");
+                      else onSwitchDocumentViewModel("DM_SERIE", "SERIE_TD");
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-200 border border-slate-700 text-[10.5px] font-bold cursor-pointer"
+                  >
+                    {activeModule === "DM_SERIE" ? "📅 التوزيع السنوي" : "📑 سلسلة التمارين"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* ج. الضبط الدقيق للهوامش بالمليمتر وحزم LaTeX وخامة الورق */}
+            <div className="pt-2 border-t border-indigo-900/60 space-y-2.5">
+            {/* شريط الضبط اليدوي للهوامش وربط نوع الوثيقة */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-[11px] font-bold text-slate-700">
+                  {isFr ? activeMarginModelSpec.descriptionFr : activeMarginModelSpec.descriptionAr}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {onSwitchDocumentViewModel && (
+                    <label className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={syncDocTypeOnModelClick}
+                        onChange={(e) => setSyncDocTypeOnModelClick(e.target.checked)}
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                      />
+                      <span>تبديل نوع الوثيقة والهوامش معاً</span>
+                    </label>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomMarginSliders((v) => !v)}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-extrabold border transition-all cursor-pointer ${
+                      showCustomMarginSliders
+                        ? "bg-indigo-900 text-amber-200 border-indigo-800"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-indigo-50"
+                    }`}
+                  >
+                    ضبط الهوامش بالمليمتر (mm)
+                  </button>
+                  {effectiveMarginOverride && (
+                    <button
+                      type="button"
+                      onClick={() => updateMarginOverride(null)}
+                      className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-extrabold cursor-pointer"
+                    >
+                      استعادة الضبط التلقائي
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {showCustomMarginSliders && (
+                <div className="pt-2 border-t border-slate-200 grid grid-cols-1 md:grid-cols-4 gap-2.5 items-center bg-white rounded-xl p-2.5">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-700">
+                      <span>الهامش العلوي (Top):</span>
+                      <span className="font-mono text-indigo-700">
+                        {activeMarginModelSpec.topMm} mm
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={5}
+                      max={25}
+                      step={1}
+                      value={activeMarginModelSpec.topMm}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        updateMarginOverride({
+                          topMm: val,
+                          bottomMm: activeMarginModelSpec.bottomMm,
+                          xMm: activeMarginModelSpec.xMm,
+                          modelId: activeMarginModelSpec.id,
+                        });
+                      }}
+                      className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-700">
+                      <span>الهامش السفلي (Bottom):</span>
+                      <span className="font-mono text-indigo-700">
+                        {activeMarginModelSpec.bottomMm} mm
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={5}
+                      max={25}
+                      step={1}
+                      value={activeMarginModelSpec.bottomMm}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        updateMarginOverride({
+                          topMm: activeMarginModelSpec.topMm,
+                          bottomMm: val,
+                          xMm: activeMarginModelSpec.xMm,
+                          modelId: activeMarginModelSpec.id,
+                        });
+                      }}
+                      className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-700">
+                      <span>الهامش الجانبي (Left/Right):</span>
+                      <span className="font-mono text-emerald-700">
+                        {activeMarginModelSpec.xMm} mm
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={5}
+                      max={25}
+                      step={1}
+                      value={activeMarginModelSpec.xMm}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        updateMarginOverride({
+                          topMm: activeMarginModelSpec.topMm,
+                          bottomMm: activeMarginModelSpec.bottomMm,
+                          xMm: val,
+                          modelId: activeMarginModelSpec.id,
+                        });
+                      }}
+                      className="w-full accent-emerald-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="bg-slate-900 text-slate-100 rounded-lg p-2 font-mono text-[9.5px] leading-relaxed">
+                    <div className="text-amber-300 font-bold mb-0.5">LaTeX / Typst Sync:</div>
+                    <div className="truncate">
+                      \geometry&#123;top={(activeMarginModelSpec.topMm / 10).toFixed(1)}cm,
+                      bottom={(activeMarginModelSpec.bottomMm / 10).toFixed(1)}cm, x=
+                      {(activeMarginModelSpec.xMm / 10).toFixed(1)}cm&#125;
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {/* اختيار حزمة تنسيق LaTeX المباشرة */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-extrabold text-slate-700 flex items-center gap-1 px-1.5">
+                  <Code2 className="w-3.5 h-3.5 text-indigo-600" />
+                  حزمة تنسيق LaTeX:
+                </span>
+                {LATEX_PACKAGE_OPTIONS.map((pkg) => {
+                  const isActive = latexPackageTheme === pkg.id;
+                  return (
+                    <button
+                      key={pkg.id}
+                      type="button"
+                      onClick={() => onChangeLatexPackageTheme?.(pkg.id)}
+                      title={isFr ? pkg.descriptionFr : pkg.descriptionAr}
+                      className={`px-2.5 py-1 rounded-xl font-mono text-[11px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                        isActive
+                          ? "bg-indigo-950 text-amber-300 border-indigo-900 shadow-xs ring-1 ring-indigo-400"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40"
+                      }`}
+                    >
+                      <span>{pkg.badge}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* اختيار خامة الورق ورمز QR */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
+                  {PAPER_SURFACE_OPTIONS.map((surf) => (
+                    <button
+                      key={surf.id}
+                      type="button"
+                      onClick={() => onChangePaperSurface?.(surf.id)}
+                      className={`px-2 py-1 rounded-lg text-[10.5px] font-bold transition-colors cursor-pointer ${
+                        paperSurface === surf.id
+                          ? "bg-white text-indigo-950 shadow-2xs font-black"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                      title={isFr ? surf.labelFr : surf.labelAr}
+                    >
+                      {surf.id === "PLAIN_WHITE"
+                        ? "أبيض A4"
+                        : surf.id === "MILLIMETER_GRID"
+                        ? "مليمتري"
+                        : surf.id === "SEYES_FRENCH"
+                        ? "دفتر Seyès"
+                        : "عاجي"}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleToggleInteractiveQr}
+                  className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    effectiveIncludeInteractiveQr
+                      ? "bg-indigo-900 text-amber-300 border-indigo-800 shadow-xs"
+                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                  }`}
+                  title="إدراج رمز الاستجابة السريعة (QR Code) للنسخة التفاعلية الرقمية للفرض في أسفل وثيقة PDF"
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>رمز QR التفاعلي</span>
+                </button>
+              </div>
+            </div>
+
+            {/* شريط تخصيص حزمة tcolorbox للمسائل الرياضية المعقدة */}
+            {latexPackageTheme === "TCOLORBOX" && onChangeTcolorboxConfig && (
+              <div className="flex flex-wrap items-center justify-between gap-2.5 bg-indigo-50/50 border border-indigo-200/80 rounded-xl px-3 py-2 text-[11px]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-black text-indigo-950 flex items-center gap-1">
+                    <span>🎨 تخصيص tcolorbox للمسائل المعقدة:</span>
+                  </span>
+                  <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200">
+                    {TCOLORBOX_PALETTE_OPTIONS.map((pal) => {
+                      const active = tcolorboxConfig.palette === pal.id;
+                      return (
+                        <button
+                          key={pal.id}
+                          type="button"
+                          onClick={() =>
+                            onChangeTcolorboxConfig({
+                              ...tcolorboxConfig,
+                              palette: pal.id,
+                            })
+                          }
+                          title={isFr ? pal.labelFr : pal.labelAr}
+                          className={`px-2 py-0.5 rounded text-[10.5px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                            active
+                              ? "bg-slate-900 text-white shadow-2xs"
+                              : "text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span
+                            className="w-2.5 h-2.5 rounded-full inline-block border border-white/50 shrink-0"
+                            style={{ backgroundColor: pal.swatchHex }}
+                          />
+                          <span className="hidden md:inline">
+                            {pal.labelAr.split(" (")[0]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-600">التظليل (colback):</span>
+                    {TCOLORBOX_SHADING_OPTIONS.map((sh) => {
+                      const active = tcolorboxConfig.shading === sh.id;
+                      return (
+                        <button
+                          key={sh.id}
+                          type="button"
+                          onClick={() =>
+                            onChangeTcolorboxConfig({
+                              ...tcolorboxConfig,
+                              shading: sh.id,
+                            })
+                          }
+                          title={isFr ? sh.labelFr : sh.labelAr}
+                          className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-bold transition cursor-pointer ${
+                            active
+                              ? "bg-indigo-900 text-amber-300"
+                              : "text-slate-600 hover:bg-slate-100"
+                          }`}
+                        >
+                          {sh.percentLabel}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <select
+                    value={tcolorboxConfig.frameStyle}
+                    onChange={(e) =>
+                      onChangeTcolorboxConfig({
+                        ...tcolorboxConfig,
+                        frameStyle: e.target.value as TcolorboxCustomConfig["frameStyle"],
+                      })
+                    }
+                    className="border border-slate-300 rounded-lg px-2 py-1 text-[10.5px] bg-white font-bold text-slate-800"
+                  >
+                    {TCOLORBOX_FRAME_OPTIONS.map((fr) => (
+                      <option key={fr.id} value={fr.id}>
+                        {isFr ? fr.labelFr : fr.labelAr}
+                      </option>
+                    ))}
+                  </select>
+
+                  <label className="flex items-center gap-1 font-bold text-indigo-950 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={tcolorboxConfig.applyToComplexProblems}
+                      onChange={(e) =>
+                        onChangeTcolorboxConfig({
+                          ...tcolorboxConfig,
+                          applyToComplexProblems: e.target.checked,
+                        })
+                      }
+                      className="rounded text-indigo-700 w-3.5 h-3.5 accent-indigo-700"
+                    />
+                    <span>تأطير المسألة التوليفية</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* شريط التدرج اللوني التلقائي للترويسات بناءً على تخصص الدرس */}
+            <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-1.5 font-extrabold text-slate-900 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={enableBranchColorGradient}
+                    onChange={(e) =>
+                      onChangeEnableBranchColorGradient?.(e.target.checked)
+                    }
+                    className="rounded text-indigo-700 w-3.5 h-3.5 accent-indigo-700"
+                  />
+                  <span className="flex items-center gap-1">
+                    <span>🎨</span>
+                    <span>التدرج اللوني التلقائي للترويسات حسب تخصص الدرس :</span>
+                  </span>
+                </label>
+
+                {enableBranchColorGradient && (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {(
+                      [
+                        {
+                          mode: "AUTO_BY_LESSON" as BranchColorGradientMode,
+                          label: "⚡ تلقائي حيوي (حسب كل درس)",
+                          dotClass:
+                            "bg-gradient-to-r from-blue-600 via-emerald-600 to-amber-500",
+                        },
+                        {
+                          mode: "ANALYSIS_BLUE" as BranchColorGradientMode,
+                          label: "∫ التحليل (أزرق)",
+                          dotClass: "bg-blue-600",
+                        },
+                        {
+                          mode: "GEOMETRY_GREEN" as BranchColorGradientMode,
+                          label: "⌖ الهندسة (أخضر)",
+                          dotClass: "bg-emerald-600",
+                        },
+                        {
+                          mode: "ALGEBRA_AMBER" as BranchColorGradientMode,
+                          label: "ℂ الجبر والعقدية (عنبري)",
+                          dotClass: "bg-amber-600",
+                        },
+                        {
+                          mode: "PROBABILITY_PURPLE" as BranchColorGradientMode,
+                          label: "ℙ الاحتمالات (بنفسجي)",
+                          dotClass: "bg-purple-600",
+                        },
+                      ] as const
+                    ).map((item) => {
+                      const active = branchColorMode === item.mode;
+                      return (
+                        <button
+                          key={item.mode}
+                          type="button"
+                          onClick={() => onChangeBranchColorMode?.(item.mode)}
+                          className={`px-2 py-0.5 rounded-lg border text-[10.5px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                            active
+                              ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                              : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full inline-block ${item.dotClass}`}
+                          />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        )}
 
         {/* درج مكتبة المنحنيات الشعاعية الجاهزة للباكالوريا (Vector SVG + TikZ) */}
         {showBacCurvesLibrary && onAddFigure && (
@@ -3820,232 +4110,8 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             </span>
           </div>
         )}
-
-        {/* سطر وصفي للحزمة المختارة وكود LaTeX المضمن */}
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/80">
-          <span className="text-slate-700 font-semibold">
-            <strong className="text-indigo-950">
-              {isFr ? selectedLatexPkg.labelFr : selectedLatexPkg.labelAr}:
-            </strong>{" "}
-            {isFr ? selectedLatexPkg.descriptionFr : selectedLatexPkg.descriptionAr}
-          </span>
-          <code
-            dir="ltr"
-            className="font-mono text-[10.5px] bg-indigo-950 text-cyan-300 px-2 py-0.5 rounded"
-          >
-            {selectedLatexPkg.packageCmd}
-          </code>
-        </div>
-
-        {/* شريط تخصيص حزمة tcolorbox للمسائل الرياضية المعقدة (الألوان، التظليل، ونمط الإطار) */}
-        {latexPackageTheme === "TCOLORBOX" && onChangeTcolorboxConfig && (
-          <div className="flex flex-wrap items-center justify-between gap-2.5 bg-indigo-50/50 border border-indigo-200/80 rounded-xl px-3 py-2 text-[11px]">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-black text-indigo-950 flex items-center gap-1">
-                <span>🎨 تخصيص tcolorbox للمسائل المعقدة:</span>
-              </span>
-              <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200">
-                {TCOLORBOX_PALETTE_OPTIONS.map((pal) => {
-                  const active = tcolorboxConfig.palette === pal.id;
-                  return (
-                    <button
-                      key={pal.id}
-                      type="button"
-                      onClick={() =>
-                        onChangeTcolorboxConfig({
-                          ...tcolorboxConfig,
-                          palette: pal.id,
-                        })
-                      }
-                      title={isFr ? pal.labelFr : pal.labelAr}
-                      className={`px-2 py-0.5 rounded text-[10.5px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                        active
-                          ? "bg-slate-900 text-white shadow-2xs"
-                          : "text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      <span
-                        className="w-2.5 h-2.5 rounded-full inline-block border border-white/50 shrink-0"
-                        style={{ backgroundColor: pal.swatchHex }}
-                      />
-                      <span className="hidden md:inline">
-                        {pal.labelAr.split(" (")[0]}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
-                <span className="text-[10px] font-bold text-slate-600">التظليل (colback):</span>
-                {TCOLORBOX_SHADING_OPTIONS.map((sh) => {
-                  const active = tcolorboxConfig.shading === sh.id;
-                  return (
-                    <button
-                      key={sh.id}
-                      type="button"
-                      onClick={() =>
-                        onChangeTcolorboxConfig({
-                          ...tcolorboxConfig,
-                          shading: sh.id,
-                        })
-                      }
-                      title={isFr ? sh.labelFr : sh.labelAr}
-                      className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-bold transition cursor-pointer ${
-                        active
-                          ? "bg-indigo-900 text-amber-300"
-                          : "text-slate-600 hover:bg-slate-100"
-                      }`}
-                    >
-                      {sh.percentLabel}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <select
-                value={tcolorboxConfig.frameStyle}
-                onChange={(e) =>
-                  onChangeTcolorboxConfig({
-                    ...tcolorboxConfig,
-                    frameStyle: e.target.value as TcolorboxCustomConfig["frameStyle"],
-                  })
-                }
-                className="border border-slate-300 rounded-lg px-2 py-1 text-[10.5px] bg-white font-bold text-slate-800"
-              >
-                {TCOLORBOX_FRAME_OPTIONS.map((fr) => (
-                  <option key={fr.id} value={fr.id}>
-                    {isFr ? fr.labelFr : fr.labelAr}
-                  </option>
-                ))}
-              </select>
-
-              <label className="flex items-center gap-1 font-bold text-indigo-950 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={tcolorboxConfig.applyToComplexProblems}
-                  onChange={(e) =>
-                    onChangeTcolorboxConfig({
-                      ...tcolorboxConfig,
-                      applyToComplexProblems: e.target.checked,
-                    })
-                  }
-                  className="rounded text-indigo-700 w-3.5 h-3.5 accent-indigo-700"
-                />
-                <span>تأطير المسألة التوليفية</span>
-              </label>
-            </div>
           </div>
         )}
-
-        {/* شريط التدرج اللوني التلقائي للترويسات بناءً على تخصص الدرس (تحليل أزرق، هندسة أخضر، جبر عنبري، احتمالات بنفسجي) */}
-        <div className="pt-2 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-1.5 font-extrabold text-slate-900 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={enableBranchColorGradient}
-                onChange={(e) =>
-                  onChangeEnableBranchColorGradient?.(e.target.checked)
-                }
-                className="rounded text-indigo-700 w-3.5 h-3.5 accent-indigo-700"
-              />
-              <span className="flex items-center gap-1">
-                <span>🎨</span>
-                <span>التدرج اللوني التلقائي للترويسات حسب تخصص الدرس :</span>
-              </span>
-            </label>
-
-            {enableBranchColorGradient && (
-              <div className="flex flex-wrap items-center gap-1">
-                {(
-                  [
-                    {
-                      mode: "AUTO_BY_LESSON" as BranchColorGradientMode,
-                      label: "⚡ تلقائي حيوي (حسب كل درس)",
-                      dotClass:
-                        "bg-gradient-to-r from-blue-600 via-emerald-600 to-amber-500",
-                    },
-                    {
-                      mode: "ANALYSIS_BLUE" as BranchColorGradientMode,
-                      label: "∫ التحليل (أزرق)",
-                      dotClass: "bg-blue-600",
-                    },
-                    {
-                      mode: "GEOMETRY_GREEN" as BranchColorGradientMode,
-                      label: "⌖ الهندسة (أخضر)",
-                      dotClass: "bg-emerald-600",
-                    },
-                    {
-                      mode: "ALGEBRA_AMBER" as BranchColorGradientMode,
-                      label: "ℂ الجبر والعقدية (عنبري)",
-                      dotClass: "bg-amber-600",
-                    },
-                    {
-                      mode: "PROBABILITY_PURPLE" as BranchColorGradientMode,
-                      label: "ℙ الاحتمالات (بنفسجي)",
-                      dotClass: "bg-purple-600",
-                    },
-                  ] as const
-                ).map((item) => {
-                  const active = branchColorMode === item.mode;
-                  return (
-                    <button
-                      key={item.mode}
-                      type="button"
-                      onClick={() => onChangeBranchColorMode?.(item.mode)}
-                      className={`px-2 py-0.5 rounded-lg border text-[10.5px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                        active
-                          ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
-                          : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
-                      }`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full inline-block ${item.dotClass}`}
-                      />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* معاينة حية لتخصصات الدروس المكتشفة في الورقة الحالية */}
-          {enableBranchColorGradient && headerScopeLessons.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1">
-              {headerScopeLessons.map((les, lIdx) => {
-                const detected =
-                  branchColorMode === "AUTO_BY_LESSON"
-                    ? detectLessonBranchTheme(les)
-                    : resolveBranchColorTheme(branchColorMode, [les]);
-                if (!detected) return null;
-                return (
-                  <span
-                    key={`${les.lessonFr}-${lIdx}`}
-                    style={{
-                      backgroundColor: detected.softBgHex,
-                      color: detected.accentColorHex,
-                      borderColor: detected.borderHex,
-                    }}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-extrabold"
-                    title={`${les.lessonAr} — ${detected.branchBadgeAr}`}
-                  >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: detected.accentColorHex }}
-                    />
-                    <span>
-                      ت{lIdx + 1}: {isFr ? detected.shortLabelFr : detected.shortLabelAr}
-                    </span>
-                  </span>
-                );
-              })}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* شريط الأدوات الذكي للتحرير النصي الغني والرموز الرياضية يظهر عند تفعيل التعديل المباشر */}
@@ -4087,7 +4153,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             </code>
             <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200 font-mono text-[10px] border border-slate-700">
               المقاس: {printMediaMetrics.widthMm}×{printMediaMetrics.heightMm}mm · فاصل الصفحة:{" "}
-              {printMediaMetrics.pageBreakIntervalPx}px ({printMediaMetrics. estimatedPageCount} صفحات)
+              {printMediaMetrics.pageBreakIntervalPx}px ({printMediaMetrics.estimatedPageCount} صفحات)
             </span>
           </div>
 
@@ -4159,9 +4225,13 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
         data-page-dimensions-mm={`${printMediaMetrics.widthMm}x${printMediaMetrics.heightMm}`}
         data-interactive-quiz-url={resolvedInteractiveQuizUrl}
         data-a4-auto-fit={autoFitCompactionScale < 1 ? "compacted" : "standard"}
-        className={`print-sheet ${fontClass} ${scaleClass} ${orientationClass} ${
+        data-ink-saver={laserInkSaverMode ? "true" : "false"}
+        data-active-scope={effectivePrintScope || "ALL"}
+        className={`print-sheet moroccan-official-sheet ${fontClass} ${scaleClass} ${orientationClass} ${
           selectedLatexPkg.sheetSkinClass
         } ${selectedPaperSurf.cssClass} ${
+          laserInkSaverMode ? "laser-ink-saver" : ""
+        } ${
           effectiveEconomicMode ? "mode-two-up-print" : ""
         } ${
           simulatePrintMediaQuery
@@ -4169,7 +4239,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             : ""
         } ${
           isInlineEditable ? "editable-sheet ring-2 ring-indigo-500/40" : ""
-        } relative overflow-hidden text-slate-900 border border-slate-300 rounded-2xl shadow-md transition-all duration-200 ${
+        } relative overflow-hidden text-slate-900 rounded-2xl transition-all duration-200 ${
           autoFitCompactionScale < 1
             ? a4LayoutReport.recommendedVerticalGapClass
             : activeMarginModelSpec.verticalSpaceClass
@@ -4282,8 +4352,8 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
       {!onlyPrintEvalGrid && activeModule === "DS_142_08" && (
         <div className="space-y-8">
           {/* أ. شبكة التخصيص أو الكفايات ومصفوفة التخصيص ثنائية الأبعاد 2D (قابلة للإظهار أو الإخفاء عند الطباعة) */}
-          {printScope !== "SUJET_ONLY" &&
-            printScope !== "SOLUTIONS_ONLY" &&
+          {effectivePrintScope !== "SUJET_ONLY" &&
+            effectivePrintScope !== "SOLUTIONS_ONLY" &&
             !onlyPrintSolutions &&
             (includeGradingScaleTable || include2DSpecMatrix) && (
           <div
@@ -4572,8 +4642,8 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
           )}
 
           {/* ب. أوراق الفرض المحروس لكل نموذج مختار (A / B / A+B أو النماذج الأربعة A / B / C / D) */}
-          {printScope !== "SPEC_GRID_ONLY" &&
-            printScope !== "SOLUTIONS_ONLY" &&
+          {effectivePrintScope !== "SPEC_GRID_ONLY" &&
+            effectivePrintScope !== "SOLUTIONS_ONLY" &&
             !onlyPrintSolutions &&
             (enableFourModelsABCD
               ? (["A", "B", "C", "D"] as const)
@@ -4608,7 +4678,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                   data-sync-section="HEADER"
                   className={`space-y-4 pt-4 border-t border-slate-300 ${
                     modelIdx > 0 ||
-                    (printScope !== "SUJET_ONLY" &&
+                    (effectivePrintScope !== "SUJET_ONLY" &&
                       (includeGradingScaleTable || include2DSpecMatrix))
                       ? "page-break"
                       : ""
@@ -6021,13 +6091,29 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                         </div>
                       );
                     })()}
+
+                    {/* تذييل الورقة الامتحانية المغربية الرسمية */}
+                    <div className="moroccan-exam-footer-notice avoid-break">
+                      <span className="font-bold text-slate-700">
+                        {isFr
+                          ? "Royaume du Maroc · Ministère de l'Éducation Nationale · Note 142-08"
+                          : "المملكة المغربية · وزارة التربية الوطنية والتعليم الأولي والرياضة · المذكرة الوزارية 142-08"}
+                      </span>
+                      <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
+                        {isFr ? "Tournez la page S.V.P ➔" : "اقلب الصفحة من فضلك ➔"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
             })}
 
           {/* ج. عناصر الإجابة وسلم التنقيط المفصل المدمج (متوافق 100% مع بنية الفرض وتجزئة النقط) */}
-          {!onlyPrintSolutions && showAnswerKey && (() => {
+          {!onlyPrintSolutions &&
+            effectivePrintScope !== "SUJET_ONLY" &&
+            effectivePrintScope !== "SPEC_GRID_ONLY" &&
+            (showAnswerKey || effectivePrintScope === "SOLUTIONS_ONLY") &&
+            (() => {
             const hasQCM =
               dsStructureMode === "QCM_ET_EXERCICES" ||
               dsStructureMode === "COMPLETE_EXAM_MAROC";
@@ -6155,10 +6241,10 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
           })()}
 
           {/* د. ملحق عناصر الإجابة والحل المفصل في صفحة منفصلة (Annexes) */}
-          {printScope !== "SUJET_ONLY" &&
-            printScope !== "SPEC_GRID_ONLY" &&
-            (includeDetailedSolutions || onlyPrintSolutions || printScope === "SOLUTIONS_ONLY") &&
-            (solutionDisplayMode === "SEPARATE_PAGE_ANNEXES" || onlyPrintSolutions || printScope === "SOLUTIONS_ONLY") && (
+          {effectivePrintScope !== "SUJET_ONLY" &&
+            effectivePrintScope !== "SPEC_GRID_ONLY" &&
+            (includeDetailedSolutions || onlyPrintSolutions || effectivePrintScope === "SOLUTIONS_ONLY") &&
+            (solutionDisplayMode === "SEPARATE_PAGE_ANNEXES" || onlyPrintSolutions || effectivePrintScope === "SOLUTIONS_ONLY") && (
               <div
                 data-sync-section="SOLUTIONS"
                 className={`space-y-6 ${
@@ -6179,7 +6265,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             )}
 
           {/* المقترح البيداغوجي 3: ملحق خطة الدعم والمعالجة التربوية لما بعد الفرض (Fiche de Remédiation Post-DS 142-08) */}
-          {includePostExamRemediationSheet && !onlyPrintSolutions && (
+          {includePostExamRemediationSheet && !onlyPrintSolutions && effectivePrintScope !== "SUJET_ONLY" && (
             <div className="page-break pt-4 space-y-4">
               <div className="border-2 border-slate-900 rounded-xl p-4 bg-slate-50/70 space-y-2">
                 <div className="flex flex-wrap justify-between items-center text-xs border-b border-slate-300 pb-2 gap-2">
@@ -6344,7 +6430,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
           )}
 
           {/* المقترح البيداغوجي 4: البطاقة التقنية والإحصائية للفرض المحروس ودفتر النصوص (Fiche Technique & Bilan Statistique) */}
-          {includeOfficialExamCoverSheet && !onlyPrintSolutions && (
+          {includeOfficialExamCoverSheet && !onlyPrintSolutions && effectivePrintScope !== "SUJET_ONLY" && (
             <div className="page-break pt-4 space-y-4">
               <div className="border-2 border-slate-900 rounded-xl p-4 bg-white space-y-3">
                 <div className="flex flex-wrap justify-between items-center text-xs border-b-2 border-slate-900 pb-2.5 gap-2">
@@ -6495,10 +6581,10 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
           )}
 
           {/* هـ. شبكة التقويم والتفريغ المخصصة (Grille d'évaluation PDF/A4) */}
-          {includeCustomEvalGridSheet && !onlyPrintSolutions && renderCustomEvaluationGridSheet()}
+          {includeCustomEvalGridSheet && !onlyPrintSolutions && effectivePrintScope !== "SUJET_ONLY" && renderCustomEvaluationGridSheet()}
 
           {/* و. ملحق مكتبة الأخطاء الشائعة للمتعلمين وبطاقات اليقظة الديداكتيكية (Banque d'Erreurs Typiques & Vigilance Didactique) */}
-          {includeDidacticVigilanceSheet && !onlyPrintSolutions && (() => {
+          {includeDidacticVigilanceSheet && !onlyPrintSolutions && effectivePrintScope !== "SUJET_ONLY" && (() => {
             const errorCards = getTypicalErrorsForLessons(baseDsLessons);
             return (
               <div className="page-break pt-4 space-y-4">
@@ -6563,10 +6649,11 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
       {/* 2. وحدة الفروض المنزلية وسلاسل التمارين (DM & Séries d'exercices TD) */}
       {!onlyPrintEvalGrid && activeModule === "DM_SERIE" && (
         <div className="space-y-8">
-          {!onlyPrintSolutions && (
+          {!onlyPrintSolutions && effectivePrintScope !== "SOLUTIONS_ONLY" && (
             <>
               {/* جدول توزيع الدروس والأوزان المختارة في الفرض المنزلي أو السلسلة */}
-              <div className="space-y-2.5 avoid-break">
+              {effectivePrintScope !== "SUJET_ONLY" && (
+              <div data-sync-section="SPEC_TABLE" className="space-y-2.5 avoid-break">
                 <h4 className="font-extrabold text-sm text-indigo-950 border-b border-slate-200 pb-1.5 flex items-center justify-between">
                   <span>
                     {isDM
@@ -6607,6 +6694,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                   })}
                 </div>
               </div>
+              )}
 
               {(isDM ? modelsToRender : (["A"] as Array<"A" | "B">)).map(
                 (modelCode, modelIdx) => (
@@ -6740,6 +6828,8 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                       );
                     })()}
 
+                    {effectivePrintScope !== "SPEC_GRID_ONLY" && (
+                    <>
                     <div data-sync-section="EXERCISES" className="space-y-6">
                       {!isDM ? (
                         /* نمط سلسلة التمارين (Série TD) : توليد وعرض التمارين بالعدد الذي حدده الأستاذ (serieExerciseCount) */
@@ -7327,52 +7417,58 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                         </div>
                       </div>
                     )}
+                    </>
+                    )}
                   </div>
                 )
-              )}
-
-              {showAnswerKey && (
-                <div data-sync-section="SOLUTIONS" className="avoid-break space-y-3 pt-4 border-t-2 border-dashed border-slate-300">
-                  <h4 className="font-extrabold text-sm text-emerald-950">
-                    {isFr
-                      ? "Éléments de correction et pistes de résolution détaillée"
-                      : "عناصر الإجابة وتوجيهات الحل المفصل"}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                    {baseDsLessons.map((lesson, idx) => {
-                      const exPoints = ((lesson.weight * 20) / 100).toFixed(1);
-                      return (
-                        <div
-                          key={idx}
-                          className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-1"
-                        >
-                          <div className="font-bold text-emerald-950 flex justify-between">
-                            <span>
-                              {isFr
-                                ? `Corrigé — ${lesson.lessonFr}`
-                                : `تصحيح — ${lesson.lessonAr}`}
-                            </span>
-                            <span className="font-mono font-bold tabular-nums">
-                              {isDM ? `${exPoints} pts` : `${lesson.weight}%`}
-                            </span>
-                          </div>
-                          <p className="text-slate-600 text-[11px] leading-relaxed">
-                            {isFr
-                              ? `Validation des étapes clés sur « ${lesson.capacitiesFr[0]} » et rédaction rigoureuse des justifications.`
-                              : `التحقق من المراحل الاستدلالية الأساسية حول « ${lesson.capacitiesAr[0]} » وسلامة التحرير الرياضي.`}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               )}
             </>
           )}
 
+          {effectivePrintScope !== "SUJET_ONLY" &&
+            effectivePrintScope !== "SPEC_GRID_ONLY" &&
+            (showAnswerKey || effectivePrintScope === "SOLUTIONS_ONLY") && (
+              <div data-sync-section="SOLUTIONS" className="avoid-break space-y-3 pt-4 border-t-2 border-dashed border-slate-300">
+                <h4 className="font-extrabold text-sm text-emerald-950">
+                  {isFr
+                    ? "Éléments de correction et pistes de résolution détaillée"
+                    : "عناصر الإجابة وتوجيهات الحل المفصل"}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  {baseDsLessons.map((lesson, idx) => {
+                    const exPoints = ((lesson.weight * 20) / 100).toFixed(1);
+                    return (
+                      <div
+                        key={idx}
+                        className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-1"
+                      >
+                        <div className="font-bold text-emerald-950 flex justify-between">
+                          <span>
+                            {isFr
+                              ? `Corrigé — ${lesson.lessonFr}`
+                              : `تصحيح — ${lesson.lessonAr}`}
+                          </span>
+                          <span className="font-mono font-bold tabular-nums">
+                            {isDM ? `${exPoints} pts` : `${lesson.weight}%`}
+                          </span>
+                        </div>
+                        <p className="text-slate-600 text-[11px] leading-relaxed">
+                          {isFr
+                            ? `Validation des étapes clés sur « ${lesson.capacitiesFr[0]} » et rédaction rigoureuse des justifications.`
+                            : `التحقق من المراحل الاستدلالية الأساسية حول « ${lesson.capacitiesAr[0]} » وسلامة التحرير الرياضي.`}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           {/* ملحق عناصر الإجابة للـ DM وسلاسل التمارين في صفحة منفصلة */}
-          {includeDetailedSolutions &&
-            (solutionDisplayMode === "SEPARATE_PAGE_ANNEXES" || onlyPrintSolutions) && (
+          {effectivePrintScope !== "SUJET_ONLY" &&
+            effectivePrintScope !== "SPEC_GRID_ONLY" &&
+            (includeDetailedSolutions || onlyPrintSolutions || effectivePrintScope === "SOLUTIONS_ONLY") &&
+            (solutionDisplayMode === "SEPARATE_PAGE_ANNEXES" || onlyPrintSolutions || effectivePrintScope === "SOLUTIONS_ONLY") && (
               <div data-sync-section="SOLUTIONS" className="space-y-6">
                 {modelsToRender.map((m) => (
                   <React.Fragment key={`dm-annex-${m}`}>
@@ -7383,7 +7479,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             )}
 
           {/* شبكة التقويم والتفريغ المخصصة للفرض المنزلي */}
-          {includeCustomEvalGridSheet && !onlyPrintSolutions && renderCustomEvaluationGridSheet()}
+          {includeCustomEvalGridSheet && !onlyPrintSolutions && effectivePrintScope !== "SUJET_ONLY" && renderCustomEvaluationGridSheet()}
         </div>
       )}
 
@@ -7398,6 +7494,8 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             </div>
 
             {/* بطاقة التوصيف والترويسة البيداغوجية الرسمية للجذاذة */}
+            {effectivePrintScope !== "SOLUTIONS_ONLY" && (
+            <>
             <div data-sync-section="SPEC_TABLE" className="avoid-break bg-slate-900 text-white rounded-2xl p-4 md:p-5 border border-cyan-900/50 space-y-3.5 shadow-md">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2.5">
@@ -7603,8 +7701,11 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                 </div>
               </div>
             )}
+            </>
+            )}
 
             {/* 1. المحطة الأولى: الوضعية الانطلاقية والنشاط البنائي الاستكشافي */}
+            {effectivePrintScope !== "SPEC_GRID_ONLY" && effectivePrintScope !== "SOLUTIONS_ONLY" && (
             <div className="avoid-break bg-white border border-slate-300 rounded-2xl p-4 md:p-5 space-y-3.5 shadow-2xs">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
                 <div className="flex items-center gap-2">
@@ -7655,8 +7756,10 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                 </div>
               </div>
             </div>
+            )}
 
             {/* 2. المحطة الثانية: محتوى الدرس كامل مع التعاريف، المبرهنات، البراهين التأسيسية، والأمثلة المحلولة */}
+            {effectivePrintScope !== "SPEC_GRID_ONLY" && (
             <div data-sync-section="EXERCISES" className="space-y-4">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <div className="flex items-center gap-2">
@@ -7860,8 +7963,10 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                 </div>
               )}
             </div>
+            )}
 
             {/* 3. المحطة الثالثة: السيناريو الديداكتيكي وتدبير الحصص */}
+            {effectivePrintScope !== "SOLUTIONS_ONLY" && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
                 <div className="flex items-center gap-2">
@@ -8033,9 +8138,10 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                   </div>
                 )}
             </div>
+            )}
 
             {/* 4. المحطة الرابعة: إدماج TICE وبرمجة بايثون (GeoGebra & Python Script) */}
-            {includeFicheTICE && (
+            {includeFicheTICE && effectivePrintScope !== "SPEC_GRID_ONLY" && (
               <div className="avoid-break bg-white border border-slate-300 rounded-2xl p-4 md:p-5 space-y-3.5 shadow-2xs">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
                   <div className="flex items-center gap-2">
@@ -8094,7 +8200,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             )}
 
             {/* 5. المحطة الخامسة: التقويم التكويني والدعم الفوري والعمل المنزلي */}
-            {includeFicheFormativeEval && (
+            {includeFicheFormativeEval && effectivePrintScope !== "SPEC_GRID_ONLY" && (
               <div data-sync-section="SOLUTIONS" className="avoid-break bg-white border border-slate-300 rounded-2xl p-4 md:p-5 space-y-3.5 shadow-2xs">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
                   <div className="flex items-center gap-2">
@@ -8167,6 +8273,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             </div>
 
             {/* إطار التوجيهات الرسمية ومجالات الرائز التشخيصي */}
+            {effectivePrintScope !== "SOLUTIONS_ONLY" && (
             <div data-sync-section="SPEC_TABLE" className="avoid-break border-2 border-indigo-950 rounded-xl p-4 bg-indigo-50/40 space-y-3 shadow-2xs">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-200 pb-2">
                 <div className="flex items-center gap-2">
@@ -8213,8 +8320,11 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                 </ul>
               </div>
             </div>
+            )}
 
             {/* الجزء الأول : أسئلة متعددة الاختيارات (QCM) وفحص المكتسبات الأساسية والتمثلات */}
+            {effectivePrintScope !== "SPEC_GRID_ONLY" && effectivePrintScope !== "SOLUTIONS_ONLY" && (
+            <>
             <div className="avoid-break border border-slate-300 rounded-xl p-4 space-y-4 bg-white shadow-xs">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <div className="flex items-center gap-2">
@@ -8397,9 +8507,15 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
               ))}
 
             {renderExerciseFigureDropZone("diag_main")}
+            </>
+            )}
 
             {/* ملحق عناصر الإجابة والتحليل الديداكتيكي للتعثرات (Corrigé & Grille Diagnostique) */}
-            {(showAnswerKey || includeDetailedSolutions) && (
+            {effectivePrintScope !== "SUJET_ONLY" &&
+              (showAnswerKey ||
+                includeDetailedSolutions ||
+                effectivePrintScope === "SOLUTIONS_ONLY" ||
+                effectivePrintScope === "SPEC_GRID_ONLY") && (
               <div data-sync-section="SOLUTIONS" className="page-break pt-4 space-y-4">
                 <div className="border-2 border-emerald-800 rounded-xl p-4 bg-emerald-50/40 space-y-3 shadow-xs">
                   <div className="flex flex-wrap items-center justify-between border-b border-emerald-200 pb-2 gap-2">
@@ -8631,6 +8747,8 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
             </div>
 
             {/* بطاقة الإطار الإداري والبيداغوجي للتوزيع السنوي */}
+            {effectivePrintScope !== "SUJET_ONLY" && (
+            <>
             <div data-sync-section="SPEC_TABLE" className="avoid-break bg-slate-900 text-white rounded-2xl p-4 md:p-5 border border-cyan-900/60 space-y-3.5 shadow-md">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2.5">
@@ -8931,8 +9049,11 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                 </table>
               </div>
             </div>
+            </>
+            )}
 
             {/* تفصيل وحدات ومقرر الدورة الأولى (Semestre 1) */}
+            {effectivePrintScope !== "SPEC_GRID_ONLY" && effectivePrintScope !== "SOLUTIONS_ONLY" && (
             <div data-sync-section="EXERCISES" className="space-y-3 avoid-break">
               <div className="flex items-center justify-between border-b border-slate-300 pb-1.5">
                 <h4 className="font-black text-sm text-indigo-950 flex items-center gap-2">
@@ -8983,9 +9104,11 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                 </table>
               </div>
             </div>
+            )}
 
             {/* تفصيل وحدات ومقرر الدورة الثانية (Semestre 2) */}
-            <div className="space-y-3 avoid-break">
+            {effectivePrintScope !== "SPEC_GRID_ONLY" && (
+            <div data-sync-section="SOLUTIONS" className="space-y-3 avoid-break">
               <div className="flex items-center justify-between border-b border-slate-300 pb-1.5">
                 <h4 className="font-black text-sm text-emerald-950 flex items-center gap-2">
                   <span className="w-5 h-5 rounded-md bg-emerald-800 text-white flex items-center justify-center font-mono text-xs">
@@ -9035,6 +9158,7 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                 </table>
               </div>
             </div>
+            )}
 
             {/* توقيعات الاعتماد والمصادقة الإدارية والتفتيشية */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 text-xs avoid-break">

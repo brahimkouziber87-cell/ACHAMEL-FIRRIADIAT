@@ -10958,6 +10958,27 @@ export default function App() {
                 <span>{syncScrollEnabled ? "التمرير المتزامن مفعل" : "تفعيل التمرير المتزامن"}</span>
               </button>
 
+              {/* زر وضع التركيز الورقي الكامل (Focus Paper Mode) لطي لوحات الإعداد وإفراد المساحة للورقة */}
+              <button
+                type="button"
+                onClick={() => {
+                  const nextCollapsed = !isConfigDeckCollapsed;
+                  setIsConfigDeckCollapsed(nextCollapsed);
+                  if (nextCollapsed) {
+                    setShowQuickEditor(false);
+                  }
+                }}
+                title="وضع التركيز الورقي: طي لوحات الضبط الجانبية والعلوية لتوسيع مساحة معاينة وطبع ورقة A4"
+                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black border transition flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
+                  isConfigDeckCollapsed && !showQuickEditor
+                    ? "bg-indigo-950 text-amber-300 border-indigo-900 shadow-xs"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-indigo-950"
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5 text-cyan-500" />
+                <span>{isConfigDeckCollapsed && !showQuickEditor ? "إلغاء التركيز الورقي" : "وضع التركيز الورقي A4"}</span>
+              </button>
+
               {/* مبدل سريع للنماذج وعناصر الإجابة مباشرة فوق المعاينة */}
               {viewMode === "PREVIEW" &&
                 (activeModule === "DS_142_08" || activeModule === "DM_SERIE") && (
@@ -11401,49 +11422,45 @@ export default function App() {
                     </span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowWolframVerifierModal(true)}
-                    title="فتح مختبر WolframAlpha للبحث والتحقق من صحة الصيغ الرياضية المعقدة وحلها قبل إنشاء الاختبار"
-                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-orange-600 hover:bg-orange-500 text-white border border-orange-500 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
-                  >
-                    <Calculator className="w-3.5 h-3.5 shrink-0" />
-                    <span>مختبر WolframAlpha للتحقق من الصيغ</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAdvancedPedagogyStudio("BAC_ANNALES")}
-                    title="فتح بنك امتحانات البكالوريا الرسمية (المغرب والبعثة AEFE) لإدراج تمارين رسمية مع الحل"
-                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-amber-600 hover:bg-amber-500 text-white border border-amber-500 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
-                  >
-                    <Award className="w-3.5 h-3.5 shrink-0" />
-                    <span>بنك البكالوريا (Annales)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAdvancedPedagogyStudio("TBI_PROJECTOR")}
-                    title="فتح وضع العرض الصفي والسبورة التفاعلية (Mode TBI) مع كشف تدريجي للحلول خطوة بخطوة"
-                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-black bg-teal-700 hover:bg-teal-600 text-white border border-teal-600 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
-                  >
-                    <Eye className="w-3.5 h-3.5 shrink-0" />
-                    <span>السبورة التفاعلية (TBI)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowQuickVoiceDictation((v) => !v)}
-                    title="فتح أو إغلاق استوديو الإملاء الصوتي عبر الميكروفون (Voice-to-Text) لتسجيل الملاحظات التربوية أو تعليمات الفرض مباشرة في المحرر"
-                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 border whitespace-nowrap cursor-pointer ${
-                      showQuickVoiceDictation
-                        ? "bg-rose-600 text-white border-rose-600 shadow-xs"
-                        : "bg-rose-50/90 text-rose-900 border-rose-300 hover:bg-rose-100"
-                    }`}
-                  >
-                    <Mic className="w-3.5 h-3.5 shrink-0" />
-                    <span>الإملاء الصوتي (Voice-to-Text)</span>
-                  </button>
+                  {/* أزرار الأدوات التفاعلية المجمعة بأناقة لمنع الازدحام */}
+                  <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-300 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setShowWolframVerifierModal(true)}
+                      title="مختبر WolframAlpha للتحقق من الصيغ الرياضية"
+                      className="p-1.5 rounded text-slate-700 hover:text-orange-600 hover:bg-orange-50 transition cursor-pointer"
+                    >
+                      <Calculator className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAdvancedPedagogyStudio("BAC_ANNALES")}
+                      title="بنك امتحانات البكالوريا الرسمية (Annales Bac)"
+                      className="p-1.5 rounded text-slate-700 hover:text-amber-600 hover:bg-amber-50 transition cursor-pointer"
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAdvancedPedagogyStudio("TBI_PROJECTOR")}
+                      title="وضع العرض الصفي والسبورة التفاعلية (Mode TBI)"
+                      className="p-1.5 rounded text-slate-700 hover:text-teal-700 hover:bg-teal-50 transition cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowQuickVoiceDictation((v) => !v)}
+                      title="استوديو الإملاء الصوتي (Voice-to-Text)"
+                      className={`p-1.5 rounded transition cursor-pointer ${
+                        showQuickVoiceDictation
+                          ? "bg-rose-600 text-white shadow-xs"
+                          : "text-slate-700 hover:text-rose-600 hover:bg-rose-50"
+                      }`}
+                    >
+                      <Mic className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   <button
                     type="button"
@@ -11457,21 +11474,22 @@ export default function App() {
                     <PenLine className="w-3.5 h-3.5" />
                     <span>
                       {isInlineEditable
-                        ? "✓ التعديل الحر داخل الورقة مفعل"
-                        : "التعديل المباشر داخل الورقة"}
+                        ? "✓ التعديل الحر مفعل"
+                        : "تعديل بالورقة"}
                     </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setShowQuickEditor((v) => !v)}
-                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition whitespace-nowrap cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black border transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
                       showQuickEditor
-                        ? "bg-indigo-950 text-white border-indigo-950"
-                        : "bg-white text-indigo-950 border-indigo-200 hover:bg-indigo-50"
+                        ? "bg-indigo-950 text-white border-indigo-950 shadow-xs"
+                        : "bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-xs"
                     }`}
                   >
-                    {showQuickEditor ? "طي الحقول ▲" : "تحرير العناوين ▼"}
+                    <PenLine className="w-3.5 h-3.5" />
+                    <span>{showQuickEditor ? "إخفاء حقول العناوين ▲" : "تحرير العناوين والترويسة ▼"}</span>
                   </button>
                 </div>
               </div>
@@ -11957,8 +11975,8 @@ export default function App() {
             </div>
           )}
 
-          {/* شريط التركيز التلقائي والانتقال المتزامن بين أقسام الكود المصدري ومعاينة الورقة */}
-          {syncScrollEnabled && (
+          {/* شريط التركيز التلقائي والانتقال المتزامن بين أقسام الكود المصدري ومعاينة الورقة (يظهر فقط في العرض المنقسم SPLIT لمنع الازدحام في المعاينة العادية) */}
+          {syncScrollEnabled && viewMode === "SPLIT" && (
             <div className="no-print flex flex-wrap items-center justify-between gap-2 bg-slate-900 text-slate-100 px-3.5 py-2 rounded-xl border border-slate-800 text-[11px]">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 font-black text-cyan-300">
