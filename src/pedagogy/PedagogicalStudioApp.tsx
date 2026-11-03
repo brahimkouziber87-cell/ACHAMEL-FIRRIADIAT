@@ -8,6 +8,8 @@ import {
   Calculator,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Cloud,
   CloudUpload,
   Code2,
@@ -52,6 +54,9 @@ import {
   Type,
   Undo2,
   Upload,
+  X,
+  Maximize2,
+  Minimize2,
   Zap,
   ZoomIn,
   ZoomOut,
@@ -660,6 +665,10 @@ export default function App() {
     "EVAL_MODELS"
   );
   const [isConfigDeckCollapsed, setIsConfigDeckCollapsed] =
+    useState<boolean>(true);
+  const [showLabsDropdown, setShowLabsDropdown] =
+    useState<boolean>(false);
+  const [isThreeColumnsExpanded, setIsThreeColumnsExpanded] =
     useState<boolean>(false);
 
   // 10. أ-3 (مكرر): المقترحات البيداغوجية الأربعة المضافة للفرض المحروس وملف الأستاذ
@@ -6282,74 +6291,64 @@ export default function App() {
           </section>
         )}
 
-        {/* شريط السياق البيداغوجي الحي ومنصة المختبرات التخصصية الموحدة (Unified Context & Didactic Labs Dock) */}
+        {/* شريط القيادة البيداغوجي الموحد ومنصة المختبرات (Executive Pedagogical Action Ribbon & Didactic Labs) */}
         <section className="bg-white px-4 py-2.5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2 text-xs no-print">
-          {/* الصف العلوي: مسار الوثيقة الحية (Unboxed Breadcrumb) + ضوابط المعاينة والتدقيق الأساسية */}
           <div className="flex flex-wrap items-center justify-between gap-2.5">
-            <div className="flex flex-wrap items-center gap-2 text-slate-600">
-              <span className="font-black text-slate-950">
-                {activeModule === "DS_142_08"
-                  ? "فرض محروس (DS)"
-                  : activeModule === "DM_SERIE"
-                  ? dmSubType === "DEVOIR_MAISON"
-                    ? "فرض منزلي (DM)"
-                    : "سلسلة تمارين (TD)"
-                  : activeModule === "FICHE_OP2007"
-                  ? "جذاذة تربوية"
-                  : activeModule === "DIAGNOSTIC"
-                  ? "رائز تشخيصي"
-                  : "التوزيع السنوي"}
-              </span>
-              <span aria-hidden="true" className="text-slate-300">·</span>
-              <span className="font-bold text-slate-800">
-                {isMission ? currentTrack.labelFr : `${currentTrack.labelAr} (${currentTrack.code})`}
-              </span>
-              <span aria-hidden="true" className="text-slate-300">·</span>
-              <span className="font-mono font-semibold text-slate-700 tabular-nums">
-                {activeModule === "DS_142_08"
-                  ? `${semester} · ${dsKey} · ${currentTrack.durationFr}`
-                  : activeModule === "DM_SERIE"
-                  ? `${dmNumber} · ${semester}`
-                  : currentTrack.durationFr}
-              </span>
+            {/* مسار الوثيقة الحية ومؤشرات الإنجاز البيداغوجي */}
+            <div className="flex flex-wrap items-center gap-2 text-slate-700">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100/90 border border-slate-200">
+                <span className="font-black text-slate-950">
+                  {activeModule === "DS_142_08"
+                    ? "فرض محروس (DS)"
+                    : activeModule === "DM_SERIE"
+                    ? dmSubType === "DEVOIR_MAISON"
+                      ? "فرض منزلي (DM)"
+                      : "سلسلة تمارين (TD)"
+                    : activeModule === "FICHE_OP2007"
+                    ? "جذاذة تربوية"
+                    : activeModule === "DIAGNOSTIC"
+                    ? "رائز تشخيصي"
+                    : "التوزيع السنوي"}
+                </span>
+                <span aria-hidden="true" className="text-slate-300">·</span>
+                <span className="font-bold text-slate-800">
+                  {isMission ? currentTrack.labelFr : `${currentTrack.labelAr} (${currentTrack.code})`}
+                </span>
+                <span aria-hidden="true" className="text-slate-300">·</span>
+                <span className="font-mono text-slate-600 font-semibold">
+                  {activeModule === "DS_142_08"
+                    ? `${semester} · ${dsKey} · ${currentTrack.durationFr}`
+                    : activeModule === "DM_SERIE"
+                    ? `${dmNumber} · ${semester}`
+                    : currentTrack.durationFr}
+                </span>
+              </div>
+
               {(activeModule === "DS_142_08" || activeModule === "DM_SERIE") && (
-                <>
-                  <span aria-hidden="true" className="text-slate-300">·</span>
-                  <span className="font-mono font-extrabold text-teal-800 tabular-nums">
-                    {activeCustomLessons.length} تمارين · {liveExamStats.totalQuestions} سؤالاً ·{" "}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-teal-50 border border-teal-200">
+                  <span className="font-mono font-black text-teal-900 tabular-nums">
+                    {activeCustomLessons.length} تمارين · {liveExamStats.totalQuestions} سؤالاً
+                  </span>
+                  <span aria-hidden="true" className="text-teal-300">·</span>
+                  <span
+                    className={`font-mono font-black tabular-nums px-1.5 py-0.5 rounded-md ${
+                      Math.abs(liveExamStats.totalPoints - 20) < 0.05
+                        ? "bg-teal-700 text-white"
+                        : "bg-amber-600 text-white"
+                    }`}
+                  >
                     {liveExamStats.totalPoints.toFixed(2)}/20 ن
                   </span>
-                </>
+                </div>
               )}
-            </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
-              {/* زر التبديل السريع لحيز الإجابة الكاملة المعاير للتلميذ */}
-              <button
-                type="button"
-                onClick={() => setIncludeAnswerWorkspace((v) => !v)}
-                className={`h-7.5 px-2.5 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border ${
-                  includeAnswerWorkspace
-                    ? "bg-teal-700 text-white border-teal-800 shadow-2xs"
-                    : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100"
-                }`}
-                title="ترك فراغ الإجابة الكاملة المعاير للتلميذ تحت كل سؤال (مع شبكة معلم، جدول تغيرات، ومراحل البرهان بالترجع)"
-              >
-                <Edit3 className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  {includeAnswerWorkspace
-                    ? "✓ حيز الإجابة الكاملة: مفعّل"
-                    : "ترك فراغ للإجابة الكاملة"}
-                </span>
-              </button>
-
-              {/* زر مرصد التدقيق البيداغوجي الشامل واقتراح النقائص */}
+              {/* مؤشر مرصد المراجعة وتدقيق المطابقة (142-08) */}
               <button
                 type="button"
                 onClick={() => setShowAuditPanel((v) => !v)}
-                className={`h-7.5 px-2.5 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border ${
+                className={`h-7.5 px-2.5 rounded-xl text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border ${
                   showAuditPanel
-                    ? "bg-slate-900 text-cyan-300 border-slate-900"
+                    ? "bg-slate-900 text-cyan-300 border-slate-900 shadow-2xs"
                     : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100"
                 }`}
                 title="فتح مرصد المراجعة الشاملة والتدقيق البيداغوجي وتصحيح الأخطاء واقتراح النقائص (142-08)"
@@ -6359,263 +6358,419 @@ export default function App() {
                     showAuditPanel ? "text-cyan-400" : "text-teal-700"
                   }`}
                 />
-                <span>المراجعة وتدقيق المطابقة</span>
+                <span>تدقيق المطابقة:</span>
                 <span className="font-mono tabular-nums font-black text-teal-700">
                   {pedagogicalAuditReport.scorePercent}%
                 </span>
               </button>
+            </div>
 
+            {/* أزرار العمليات التنفيذية والمختبرات الديداكتيكية المنبثقة */}
+            <div className="flex flex-wrap items-center gap-1.5 relative">
+              {/* زر التبديل السريع لحيز الإجابة المعاير */}
               <button
                 type="button"
-                onClick={() => setIsConfigDeckCollapsed((v) => !v)}
-                className={`hidden lg:inline-flex items-center gap-1.5 h-7.5 px-2.5 rounded-lg text-[11px] font-black transition cursor-pointer border ${
-                  isConfigDeckCollapsed
-                    ? "bg-slate-900 text-cyan-300 border-slate-900 shadow-2xs"
-                    : "bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200"
+                onClick={() => setIncludeAnswerWorkspace((v) => !v)}
+                className={`h-7.5 px-2.5 rounded-xl text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border ${
+                  includeAnswerWorkspace
+                    ? "bg-teal-700 text-white border-teal-800 shadow-2xs"
+                    : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100"
                 }`}
-                title="تبديل وضع اللوح الإلكتروني والتركيز الكامل على ورقة A4 (اختصار سطح المكتب: Ctrl+B)"
+                title="ترك فراغ الإجابة الكاملة المعاير للتلميذ تحت كل سؤال (مع شبكة معلم، جدول تغيرات، ومراحل البرهان بالترجع)"
               >
-                <Sliders className="w-3.5 h-3.5 shrink-0" />
+                <Edit3 className="w-3.5 h-3.5 shrink-0" />
                 <span>
-                  {isConfigDeckCollapsed
-                    ? "إظهار أعمدة الإعدادات (Ctrl+B)"
-                    : "التركيز على الورقة A4"}
+                  {includeAnswerWorkspace ? "حيز الإجابة: مفعّل" : "حيز الإجابة"}
                 </span>
               </button>
-              {isConfigDeckCollapsed && (
+
+              {/* زر القائمة المنسدلة الموحدة للمختبرات الديداكتيكية */}
+              <div className="relative">
                 <button
                   type="button"
-                  onClick={() => handleOpenMobileConfigSheet(1)}
-                  className="hidden lg:inline-flex h-7.5 px-2.5 rounded-lg text-[11px] font-black bg-slate-900 text-cyan-300 border border-slate-700 items-center gap-1.5 cursor-pointer"
-                  title="فتح درج الإعدادات السريع دون مغادرة معاينة الورقة"
+                  onClick={() => setShowLabsDropdown((v) => !v)}
+                  className={`h-7.5 px-2.5 rounded-xl text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border ${
+                    showLabsDropdown
+                      ? "bg-amber-600 text-white border-amber-700 shadow-xs ring-2 ring-amber-200"
+                      : "bg-gradient-to-r from-amber-500 to-orange-600 text-white border-amber-600 hover:from-amber-600 hover:to-orange-700 shadow-2xs"
+                  }`}
+                  title="المختبرات الديداكتيكية والأدوات التخصصية للمفتش والأستاذ"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>درج الإعدادات العائم</span>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-100 fill-current shrink-0" />
+                  <span>المختبرات والأدوات (12)</span>
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform ${
+                      showLabsDropdown ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => handleOpenMobileConfigSheet(1)}
-                className="lg:hidden h-7.5 px-2.5 rounded-lg text-[11px] font-black bg-slate-900 text-cyan-300 border border-slate-700 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-                <span>درج الإعدادات والضوابط</span>
-              </button>
-            </div>
-          </div>
 
-          {/* الصف السفلي الموحد: رصيف المختبرات الديداكتيكية واستوديوهات المفتش والأستاذ (Unified Segmented Lab Dock) */}
-          <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <span className="text-[10.5px] font-black text-slate-400 whitespace-nowrap shrink-0 pl-1">
-              المختبرات التخصصية:
-            </span>
+                {/* القائمة المنسدلة المنبثقة لـ 12 مختبراً وأداة ديداكتيكية */}
+                {showLabsDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowLabsDropdown(false)}
+                    />
+                    <div
+                      className="absolute left-0 mt-1.5 w-80 max-h-[75vh] overflow-y-auto studio-scroll bg-white rounded-2xl border border-slate-200 shadow-2xl p-2 z-50 space-y-1.5 text-right"
+                      style={{ minWidth: "300px" }}
+                    >
+                      <div className="px-2.5 py-1.5 border-b border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] font-black text-slate-900">
+                          المختبرات والأدوات الديداكتيكية
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowLabsDropdown(false)}
+                          className="w-5 h-5 rounded-md hover:bg-slate-100 text-slate-400 flex items-center justify-center cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
 
-            {/* زر تحويل التمارين الحالية إلى اختبار تفاعلي مع تصحيح آلي فوري (Interactive Quiz) */}
-            <button
-              type="button"
-              onClick={handleOpenInteractiveQuiz}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-amber-600 shadow-2xs whitespace-nowrap shrink-0"
-              title="تحويل التمارين الحالية إلى اختبار تفاعلي (Interactive Quiz) مع تصحيح آلي فوري وسجل نقط عبر مكتبة quizGenerator"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-100 fill-current shrink-0" />
-              <span>اختبار تفاعلي وتصحيح آلي (Quiz /20)</span>
-            </button>
+                      {/* أدوات التقويم والمحاكاة */}
+                      <div className="space-y-0.5">
+                        <div className="text-[10px] font-black text-slate-400 px-2 pt-1">
+                          التقويم والمحاكاة والتخصيص:
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            handleOpenInteractiveQuiz();
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-amber-50 hover:text-amber-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <Zap className="w-4 h-4 text-amber-600 shrink-0" />
+                          <div className="flex-1">
+                            <div>اختبار تفاعلي وتصحيح آلي (Quiz /20)</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              تحويل التمارين إلى اختبار تفاعلي فوري
+                            </div>
+                          </div>
+                        </button>
 
-            {activeModule === "DS_142_08" && (
-              <button
-                type="button"
-                onClick={() => handleOpenAdvancedPedagogyStudio("SPEC_2D")}
-                className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-900 text-cyan-300 border-slate-800 hover:bg-slate-800 whitespace-nowrap shrink-0"
-                title="فتح مصفوفة التخصيص 2D وتقييم المهارات المكتسبة للتلاميذ والتقرير البيداغوجي المدمج"
-              >
-                <Table2 className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
-                <span>مصفوفة التخصيص 2D</span>
-              </button>
-            )}
+                        {activeModule === "DS_142_08" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowLabsDropdown(false);
+                              handleOpenAdvancedPedagogyStudio("SPEC_2D");
+                            }}
+                            className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-cyan-50 hover:text-cyan-900 flex items-center gap-2 transition cursor-pointer text-right"
+                          >
+                            <Table2 className="w-4 h-4 text-cyan-600 shrink-0" />
+                            <div className="flex-1">
+                              <div>مصفوفة التخصيص 2D (المقرر × بلوم)</div>
+                              <div className="text-[9.5px] text-slate-500 font-normal">
+                                مطابقة مجالات المهارات والأوزان المئوية
+                              </div>
+                            </div>
+                          </button>
+                        )}
 
-            {activeModule === "DS_142_08" && (
+                        {activeModule === "DS_142_08" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowLabsDropdown(false);
+                              setImportedStudioInitialTab("ARCHIVE");
+                              setShowImportedExamStudio(true);
+                            }}
+                            className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-teal-50 hover:text-teal-900 flex items-center gap-2 transition cursor-pointer text-right"
+                          >
+                            <Sparkles className="w-4 h-4 text-teal-600 shrink-0" />
+                            <div className="flex-1">
+                              <div>محاكاة فرض خارجي بالأرشيف</div>
+                              <div className="text-[9.5px] text-slate-500 font-normal">
+                                توليد نماذج بديلة متكافئة الصعوبة
+                              </div>
+                            </div>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setImportedStudioInitialTab("PDF_HIGHLIGHTER");
+                            setShowImportedExamStudio(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-amber-50 hover:text-amber-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <Highlighter className="w-4 h-4 text-amber-600 shrink-0" />
+                          <div className="flex-1">
+                            <div>عارض PDF والتوليد بالتظليل</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              تظليل بالماوس واستخراج تمارين ذكية
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* مختبرات الرياضيات المتخصصة */}
+                      <div className="space-y-0.5 border-t border-slate-100 pt-1">
+                        <div className="text-[10px] font-black text-slate-400 px-2 pt-1">
+                          المختبرات الديداكتيكية الرياضية:
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setMathInspectorStudioTab("SIGN_TABLE_STUDIO");
+                            setShowMathInspectorStudioModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-indigo-50 hover:text-indigo-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-mono text-indigo-700 font-black text-xs">
+                            ±||
+                          </span>
+                          <div className="flex-1">
+                            <div>جدول الإشارة ومجموعة التعريف D_f</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              توليد آلي بدقة MathJS ومعاينة فورية
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setMathInspectorStudioTab("INTEGRAL_AREA_STUDIO");
+                            setShowMathInspectorStudioModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-emerald-50 hover:text-emerald-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-serif text-emerald-700 font-black text-sm">
+                            ∫
+                          </span>
+                          <div className="flex-1">
+                            <div>التكامل وحساب المساحة المظللة</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              تكامل عددي وتوليد مساحات SVG للمنحنيات
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setMathInspectorStudioTab("SPACE_GEOMETRY_3D_STUDIO");
+                            setShowMathInspectorStudioModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-cyan-50 hover:text-cyan-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-mono text-cyan-700 font-black text-xs">
+                            3D
+                          </span>
+                          <div className="flex-1">
+                            <div>الهندسة الفضائية ثلاثية الأبعاد (SVG)</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              مكعب، رباعي أوجه، هرم وفلكة ومستوٍ قاطع
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setFourProposalsTab("INTERACTIVE_CF_SPLINE");
+                            setShowFourProposalsModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-indigo-50 hover:text-indigo-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-serif text-indigo-700 font-black text-xs">
+                            C_f
+                          </span>
+                          <div className="flex-1">
+                            <div>محرر المنحنى بالماوس (Interactive Spline)</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              رسم المنحنى واستنتاج جدول التغيرات والصيغة
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* أدوات المفتش والمنظومة التربوية */}
+                      <div className="space-y-0.5 border-t border-slate-100 pt-1">
+                        <div className="text-[10px] font-black text-slate-400 px-2 pt-1">
+                          أدوات التفتيش والتتبع المؤسساتي:
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setMathInspectorStudioTab("DOUBLE_PENALTY_DETECTOR");
+                            setShowMathInspectorStudioModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-amber-50 hover:text-amber-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-mono text-amber-700 font-black text-xs">
+                            1×3
+                          </span>
+                          <div className="flex-1">
+                            <div>مدقق المفتش (العقوبة المزدوجة)</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              معالجة التبعية بين الأسئلة وميزانية الزمن
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setMathInspectorStudioTab("LONGITUDINAL_COHORT");
+                            setShowMathInspectorStudioModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-teal-50 hover:text-teal-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-mono text-teal-700 font-black text-xs">
+                            DS1→3
+                          </span>
+                          <div className="flex-1">
+                            <div>لوحة التتبع الطولي للفروض ومسار</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              تتبع مسار المتعلمين من الفرض 1 إلى الفرض 3
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setFourProposalsTab("MASSAR_XLSX_STUDIO");
+                            setShowFourProposalsModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-emerald-50 hover:text-emerald-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-mono text-emerald-700 font-black text-xs">
+                            .XLS
+                          </span>
+                          <div className="flex-1">
+                            <div>مصنف منظومة مسار الرسمي</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              استيراد وتصدير مباشر لملفات النقط الرسمية
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setFourProposalsTab("BIOF_ERRORS_CATALOG");
+                            setShowFourProposalsModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-amber-50 hover:text-amber-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-mono text-amber-700 font-black text-xs">
+                            BIOF
+                          </span>
+                          <div className="flex-1">
+                            <div>بنك الأخطاء الشائعة والعوائق</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              فهرس الأخطاء النموذجية لكل درس ومسلك
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setFourProposalsTab("QR_PROGRESSIVE_HINTS");
+                            setShowFourProposalsModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-indigo-50 hover:text-indigo-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-mono text-indigo-700 font-black text-xs">
+                            QR
+                          </span>
+                          <div className="flex-1">
+                            <div>أوراق التقييم الذاتي والتلميحات بالـ QR</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              تلميحات متدرجة وروابط تصحيح موجهة
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            setMathInspectorStudioTab("EDTECH_DEV_STUDIO");
+                            setShowMathInspectorStudioModal(true);
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-slate-100 hover:text-slate-900 flex items-center gap-2 transition cursor-pointer text-right"
+                        >
+                          <span className="font-mono text-purple-700 font-black text-xs">
+                            Moodle
+                          </span>
+                          <div className="flex-1">
+                            <div>مولد النماذج وتصدير Moodle XML</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              نماذج متكافئة A/B/C/D وكثافة A4
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* زر إظهار/إخفاء لوحة هندسة الفرض والإعدادات المدمجة */}
               <button
                 type="button"
                 onClick={() => {
-                  setImportedStudioInitialTab("ARCHIVE");
-                  setShowImportedExamStudio((v) => !v);
+                  setIsConfigDeckCollapsed((v) => !v);
+                  setMobileConfigSheetOpen(false);
                 }}
-                className={`h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border whitespace-nowrap shrink-0 ${
-                  isExamSimulationActive
-                    ? "bg-teal-700 text-white border-teal-800"
-                    : showImportedExamStudio && importedStudioInitialTab !== "PDF_HIGHLIGHTER"
-                    ? "bg-slate-900 text-cyan-300 border-slate-800"
-                    : "bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200"
+                className={`h-7.5 px-3 rounded-xl text-[11.5px] font-black transition flex items-center gap-1.5 cursor-pointer border ${
+                  !isConfigDeckCollapsed
+                    ? "bg-indigo-700 text-white border-indigo-800 shadow-xs ring-2 ring-indigo-200"
+                    : "bg-slate-900 text-cyan-300 border-slate-800 hover:bg-slate-800 shadow-2xs"
                 }`}
+                title="فتح أو إخفاء لوحة إعدادات المسلك والدروس والضوابط (Ctrl+B)"
               >
-                <Sparkles className="w-3 h-3 text-cyan-700 shrink-0" />
-                <span>
-                  {showImportedExamStudio && importedStudioInitialTab !== "PDF_HIGHLIGHTER"
-                    ? "إخفاء استوديو المحاكاة"
-                    : isExamSimulationActive
-                    ? `الفرض المحاكى (#${examVariationSeed})`
-                    : "محاكاة فرض خارجي"}
-                </span>
+                <Sliders className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>هندسة الفرض والإعدادات</span>
+                {!isConfigDeckCollapsed ? (
+                  <ChevronUp className="w-3.5 h-3.5 shrink-0" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 shrink-0" />
+                )}
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={() => {
-                if (showImportedExamStudio && importedStudioInitialTab === "PDF_HIGHLIGHTER") {
-                  setShowImportedExamStudio(false);
-                } else {
-                  setImportedStudioInitialTab("PDF_HIGHLIGHTER");
-                  setShowImportedExamStudio(true);
-                }
-              }}
-              className={`h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border whitespace-nowrap shrink-0 ${
-                showImportedExamStudio && importedStudioInitialTab === "PDF_HIGHLIGHTER"
-                  ? "bg-slate-900 text-amber-300 border-slate-800"
-                  : "bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200"
-              }`}
-              title="فتح عارض PDF التفاعلي وتظليل المقاطع بالماوس لتوليد تمارين رياضية موازية بالذكاء الاصطناعي"
-            >
-              <Highlighter className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>عارض PDF والتوليد بالتظليل</span>
-            </button>
+              {/* زر الطباعة الفورية للورقة A4 */}
+              <button
+                type="button"
+                onClick={() => handlePrint(false)}
+                className="h-7.5 px-2.5 rounded-xl text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100"
+                title="طباعة ورقة الفرض A4 مباشرة"
+              >
+                <Printer className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                <span className="hidden sm:inline">طباعة</span>
+              </button>
 
-            <div className="w-px h-4 bg-slate-200 shrink-0 mx-0.5" aria-hidden="true" />
-
-            <button
-              type="button"
-              onClick={() => {
-                setMathInspectorStudioTab("SIGN_TABLE_STUDIO");
-                setShowMathInspectorStudioModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 whitespace-nowrap shrink-0"
-              title="مولد جدول الإشارة ومجموعة التعريف الآلي (Tableaux de Signes & D_f) عبر MathJS"
-            >
-              <span className="font-mono text-indigo-700 font-black">±||</span>
-              <span>جدول الإشارة و D_f</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMathInspectorStudioTab("INTEGRAL_AREA_STUDIO");
-                setShowMathInspectorStudioModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 whitespace-nowrap shrink-0"
-              title="مختبر حساب التكامل والمساحات المظللة بين منحنيين (Calcul Intégral & Aires Hachurées)"
-            >
-              <span className="font-serif text-emerald-700 font-black">∫</span>
-              <span>التكامل والمساحة المظللة</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMathInspectorStudioTab("SPACE_GEOMETRY_3D_STUDIO");
-                setShowMathInspectorStudioModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 whitespace-nowrap shrink-0"
-              title="مكتبة الأشكال الهندسية الفضائية ثلاثية الأبعاد (مكعب، رباعي أوجه، هرم، فلكة ومستوٍ قاطع)"
-            >
-              <span className="font-mono text-cyan-800 font-black">3D</span>
-              <span>الهندسة الفضائية SVG</span>
-            </button>
-
-            <div className="w-px h-4 bg-slate-200 shrink-0 mx-0.5" aria-hidden="true" />
-
-            <button
-              type="button"
-              onClick={() => {
-                setMathInspectorStudioTab("DOUBLE_PENALTY_DETECTOR");
-                setShowMathInspectorStudioModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 whitespace-nowrap shrink-0"
-              title="النقطة 2 للمفتش التربوي: مدقق العقوبة المزدوجة (3 أنماط إصلاح) + التدرج الديداكتيكي وميزانية الزمن (1×3)"
-            >
-              <span className="font-mono text-amber-700 font-black">1×3</span>
-              <span>مدقق المفتش (العقوبة المزدوجة)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMathInspectorStudioTab("LONGITUDINAL_COHORT");
-                setShowMathInspectorStudioModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 whitespace-nowrap shrink-0"
-              title="النقطة 3 للمفتش التربوي: لوحة التتبع الطولي (DS1→DS2→DS3) ومبيان التطور ومصنف نقط مسار"
-            >
-              <span className="font-mono text-teal-800 font-black">DS1→3</span>
-              <span>التتبع الطولي ومسار</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMathInspectorStudioTab("EDTECH_DEV_STUDIO");
-                setShowMathInspectorStudioModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-900 hover:bg-slate-800 text-cyan-300 border-slate-800 whitespace-nowrap shrink-0"
-              title="مقترحات مطور البرامج التربوية: مولد النماذج البارامترية المتكافئة A/B/C/D + مدقق كثافة A4 + تصدير Moodle XML"
-            >
-              <span className="font-mono text-amber-300 font-black">A/B/C/D</span>
-              <span>مختبر النماذج و Moodle XML</span>
-            </button>
-
-            <div className="w-px h-4 bg-slate-200 shrink-0 mx-0.5" aria-hidden="true" />
-
-            {/* أزرار الوصول الفوري للمقترحات العملية الأربعة الجديدة */}
-            <button
-              type="button"
-              onClick={() => {
-                setFourProposalsTab("INTERACTIVE_CF_SPLINE");
-                setShowFourProposalsModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-900 hover:bg-slate-800 text-cyan-300 border-slate-800 whitespace-nowrap shrink-0"
-              title="المقترح 1: محرر المنحنيات البيانية التفاعلي باللمس والماوس (C_f Interactive Spline) مع استنتاج الصيغة وجدول التغيرات"
-            >
-              <span className="font-serif text-cyan-300 font-black">C_f</span>
-              <span>محرر المنحنى بالماوس</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setFourProposalsTab("MASSAR_XLSX_STUDIO");
-                setShowFourProposalsModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 whitespace-nowrap shrink-0"
-              title="المقترح 2: استيراد وتصدير مباشر لملفات منظومة «مسار» الرسمية (Excel / CSV) مع التقديرات التربوية الآلية"
-            >
-              <span className="font-mono text-emerald-700 font-black">.XLS</span>
-              <span>مصنف مسار الرسمي</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setFourProposalsTab("BIOF_ERRORS_CATALOG");
-                setShowFourProposalsModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 whitespace-nowrap shrink-0"
-              title="المقترح 3: بنك الأخطاء الشائعة للمتعلمين والعوائق الإبستيمولوجية حسب كل درس (BIOF)"
-            >
-              <span className="font-mono text-amber-700 font-black">BIOF</span>
-              <span>بنك الأخطاء الشائعة</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setFourProposalsTab("QR_PROGRESSIVE_HINTS");
-                setShowFourProposalsModal(true);
-              }}
-              className="h-7 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer border bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200 whitespace-nowrap shrink-0"
-              title="المقترح 4: مولد أوراق التصحيح الذاتي والتلميحات التدريجية بالرمز المربع (Auto-Évaluation par QR Code)"
-            >
-              <span className="font-mono text-indigo-700 font-black">QR</span>
-              <span>تلميحات التصحيح الذاتي</span>
-            </button>
+              {/* زر تحميل PDF */}
+              <button
+                type="button"
+                onClick={handleExportPDF}
+                disabled={isExportingPDF}
+                className="h-7.5 px-3 rounded-xl text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-700 shadow-2xs disabled:opacity-50"
+                title="تصدير وثيقة الفرض كملف PDF عالي الجودة"
+              >
+                <FileDown className="w-3.5 h-3.5 shrink-0" />
+                <span>{isExportingPDF ? "جارٍ التوليد..." : "تحميل PDF"}</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -6987,83 +7142,128 @@ export default function App() {
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
               className={`no-print ${
                 mobileConfigSheetOpen
-                  ? isConfigDeckCollapsed
-                    ? "fixed inset-x-0 bottom-0 z-50 bg-slate-50 rounded-t-3xl border-t border-slate-300 shadow-2xl max-h-[88vh] flex flex-col p-4 overflow-y-auto"
-                    : "fixed inset-x-0 bottom-0 z-50 bg-slate-50 rounded-t-3xl border-t border-slate-300 shadow-2xl max-h-[88vh] flex flex-col p-3.5 overflow-y-auto lg:static lg:p-0 lg:bg-transparent lg:border-none lg:shadow-none lg:rounded-none lg:max-h-none lg:overflow-visible"
-                  : "hidden lg:block overflow-hidden"
+                  ? "fixed inset-x-0 bottom-0 z-50 bg-slate-50 rounded-t-3xl border-t border-slate-300 shadow-2xl max-h-[88vh] flex flex-col p-4 overflow-y-auto"
+                  : "bg-slate-50/90 p-4 md:p-5 rounded-3xl border border-slate-300/80 shadow-sm overflow-hidden"
               }`}
             >
-              {/* رأس الدرج السفلي وتبويبات الأعمدة الثلاثة على الجوال واللوح الإلكتروني */}
-              <div
-                className={`${
-                  isConfigDeckCollapsed ? "" : "lg:hidden "
-                }sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xs pb-3 mb-3 border-b border-slate-200`}
-              >
-                <div
-                  className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto mb-2.5 cursor-pointer"
-                  onClick={() => setMobileConfigSheetOpen(false)}
-                />
-                <div className="flex items-center justify-between gap-2 mb-2.5">
-                  <div>
-                    <h3 className="text-xs font-black text-slate-950">
-                      درج الإعدادات والضوابط البيداغوجية
-                    </h3>
-                    <p className="text-[10px] text-slate-500 font-semibold">
-                      اختر قسم الإعدادات أو أغلقه للعودة الفورية إلى معاينة الورقة A4
-                    </p>
-                  </div>
-                  <button
-                    type="button"
+              {/* رأس لوحة الإعدادات وتبويبات الأقسام الثلاثة مع أزرار التحكم في العرض والإغلاق */}
+              <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-xs pb-3 mb-3 border-b border-slate-200">
+                {mobileConfigSheetOpen && (
+                  <div
+                    className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto mb-2.5 cursor-pointer lg:hidden"
                     onClick={() => setMobileConfigSheetOpen(false)}
-                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-black flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>معاينة الورقة A4</span>
-                    <span>✕</span>
-                  </button>
+                  />
+                )}
+                <div className="flex flex-wrap items-center justify-between gap-2.5 mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-xl bg-slate-900 text-cyan-300 flex items-center justify-center font-bold text-xs shrink-0">
+                      ⚙️
+                    </span>
+                    <div>
+                      <h3 className="text-xs font-black text-slate-950 flex items-center gap-2">
+                        <span>هندسة الفرض والضوابط البيداغوجية</span>
+                        <span className="text-[10px] font-mono text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded-md border border-cyan-200">
+                          {mobileActiveColumn === 1
+                            ? "01. المسلك والهوية والترويسة"
+                            : mobileActiveColumn === 2
+                            ? "02. الدروس وأوزان المهارات"
+                            : "03. النماذج والضوابط البيداغوجية"}
+                        </span>
+                      </h3>
+                      <p className="text-[10px] text-slate-500 font-semibold">
+                        {isThreeColumnsExpanded
+                          ? "عرض الأعمدة الثلاثة متاح بالتوازي. يمكنك التبديل إلى العرض المبوّب أو إغلاق اللوحة للتركيز على ورقة A4."
+                          : "تنقل بين التبويبات الثلاثة لتعديل الإعدادات بدقة، أو أغلق اللوحة للتركيز الكامل على ورقة الفرض A4."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* زر التبديل بين العرض المبوب والعرض المتوازي لـ 3 أعمدة (على الشاشات الكبيرة) */}
+                    <button
+                      type="button"
+                      onClick={() => setIsThreeColumnsExpanded((v) => !v)}
+                      className="hidden lg:inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold cursor-pointer transition shadow-2xs"
+                      title={
+                        isThreeColumnsExpanded
+                          ? "التبديل إلى العرض المبوّب الفردي (أكثر راحة وتنظيماً)"
+                          : "عرض الأعمدة الثلاثة معاً بالتوازي جنباً إلى جنب"
+                      }
+                    >
+                      {isThreeColumnsExpanded ? (
+                        <>
+                          <Minimize2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                          <span>العرض المبوّب المركّز</span>
+                        </>
+                      ) : (
+                        <>
+                          <Maximize2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                          <span>عرض الـ 3 أعمدة معاً</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* زر إغلاق اللوحة والعودة لمعاينة ورقة A4 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsConfigDeckCollapsed(true);
+                        setMobileConfigSheetOpen(false);
+                      }}
+                      className="h-8 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-black flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                      title="إخفاء لوحة الإعدادات والتركيز الكامل على ورقة الفرض A4 (Ctrl+B)"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      <span>التركيز على ورقة A4</span>
+                      <X className="w-3.5 h-3.5 mr-0.5 text-slate-400 shrink-0" />
+                    </button>
+                  </div>
                 </div>
+
+                {/* شريط تبويبات الأقسام الثلاثة */}
                 <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/80 rounded-xl">
                   <button
                     type="button"
                     onClick={() => setMobileActiveColumn(1)}
-                    className={`min-h-[40px] py-1.5 px-2 rounded-lg text-[11px] font-black transition flex items-center justify-center gap-1 cursor-pointer ${
+                    className={`min-h-[38px] py-1.5 px-2 rounded-lg text-[11px] font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       mobileActiveColumn === 1
-                        ? "bg-slate-900 text-cyan-300 shadow-xs"
-                        : "text-slate-700 hover:text-slate-950"
+                        ? "bg-slate-900 text-cyan-300 shadow-xs ring-1 ring-slate-800"
+                        : "text-slate-700 hover:text-slate-950 hover:bg-slate-200"
                     }`}
                   >
-                    <span className="font-mono">01</span>
+                    <span className="font-mono text-xs">01</span>
                     <span>المسلك والهوية</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setMobileActiveColumn(2)}
-                    className={`min-h-[40px] py-1.5 px-2 rounded-lg text-[11px] font-black transition flex items-center justify-center gap-1 cursor-pointer ${
+                    className={`min-h-[38px] py-1.5 px-2 rounded-lg text-[11px] font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       mobileActiveColumn === 2
-                        ? "bg-slate-900 text-cyan-300 shadow-xs"
-                        : "text-slate-700 hover:text-slate-950"
+                        ? "bg-slate-900 text-cyan-300 shadow-xs ring-1 ring-slate-800"
+                        : "text-slate-700 hover:text-slate-950 hover:bg-slate-200"
                     }`}
                   >
-                    <span className="font-mono">02</span>
+                    <span className="font-mono text-xs">02</span>
                     <span>الدروس والنسب</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setMobileActiveColumn(3)}
-                    className={`min-h-[40px] py-1.5 px-2 rounded-lg text-[11px] font-black transition flex items-center justify-center gap-1 cursor-pointer ${
+                    className={`min-h-[38px] py-1.5 px-2 rounded-lg text-[11px] font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       mobileActiveColumn === 3
-                        ? "bg-slate-900 text-cyan-300 shadow-xs"
-                        : "text-slate-700 hover:text-slate-950"
+                        ? "bg-slate-900 text-cyan-300 shadow-xs ring-1 ring-slate-800"
+                        : "text-slate-700 hover:text-slate-950 hover:bg-slate-200"
                     }`}
                   >
-                    <span className="font-mono">03</span>
+                    <span className="font-mono text-xs">03</span>
                     <span>النماذج والضوابط</span>
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 items-stretch">
+              <div className={isThreeColumnsExpanded ? "grid grid-cols-1 lg:grid-cols-3 gap-3.5 items-stretch" : "w-full max-w-4xl mx-auto"}>
             {/* العمود الأول: الهوية المؤسسية والمسلك الدراسي والخطوط */}
-            <div className={`bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex-col justify-between max-h-[560px] ${mobileActiveColumn === 1 ? "flex" : "hidden lg:flex"}`}>
+            <div className={`bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex-col justify-between ${isThreeColumnsExpanded ? "flex max-h-[600px]" : mobileActiveColumn === 1 ? "flex" : "hidden"}`}>
               <div className="overflow-y-auto studio-scroll space-y-4 pr-1">
                 <div className="border-b border-slate-200 pb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -8998,7 +9198,7 @@ export default function App() {
         </div>
 
             {/* العمود الثاني: اختيار الدروس وتحديد نسبة كل درس (%) */}
-            <div className={`bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex-col justify-between max-h-[640px] ${mobileActiveColumn === 2 ? "flex" : "hidden lg:flex"}`}>
+            <div className={`bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex-col justify-between ${isThreeColumnsExpanded ? "flex max-h-[640px]" : mobileActiveColumn === 2 ? "flex" : "hidden"}`}>
               <div className="overflow-y-auto studio-scroll space-y-4 pr-1">
                 <div className="border-b border-slate-200 pb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -9617,7 +9817,7 @@ export default function App() {
           </div>
 
             {/* العمود الثالث: النماذج المتعددة والضوابط الديداكتيكية والمختبرات */}
-            <div className={`bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex-col justify-between max-h-[640px] ${mobileActiveColumn === 3 ? "flex" : "hidden lg:flex"}`}>
+            <div className={`bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex-col justify-between ${isThreeColumnsExpanded ? "flex max-h-[640px]" : mobileActiveColumn === 3 ? "flex" : "hidden"}`}>
               <div className="overflow-y-auto studio-scroll space-y-4 pr-1">
                 <div className="border-b border-slate-200 pb-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
