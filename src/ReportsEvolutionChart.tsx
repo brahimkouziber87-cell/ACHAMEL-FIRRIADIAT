@@ -3272,8 +3272,9 @@ export default function ReportsEvolutionChart() {
                       dataKey="failureRiskScore"
                       name="مؤشر احتمالية التعثر (%)"
                       radius={[4, 4, 0, 0]}
-                      onClick={data => {
-                        if (data) setSelectedRiskStudent(data);
+                      onClick={(data: any) => {
+                        const payload = data?.payload || data;
+                        if (payload) setSelectedRiskStudent(payload as StudentFailureRiskData);
                       }}
                       className="cursor-pointer"
                     >
@@ -3523,9 +3524,9 @@ export default function ReportsEvolutionChart() {
                       <Cell
                         key={`cell-${index}`}
                         fill={
-                          entry['معدل التلميذ'] >= 14
+                          (entry['معدل التلميذ'] ?? 0) >= 14
                             ? '#d97706'
-                            : entry['معدل التلميذ'] >= 10
+                            : (entry['معدل التلميذ'] ?? 0) >= 10
                             ? '#312e81'
                             : '#92400e'
                         }

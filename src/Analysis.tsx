@@ -282,8 +282,8 @@ export default function Analysis() {
       return {
         studentMetrics: [],
         classAverages: { f1: null, f2: null, f3: null, overall: null },
-        classQuartiles: { f1: { q1: null, med: null, q3: null }, f2: { q1: null, med: null, q3: null }, f3: { q1: null, med: null, q3: null } },
-        macroTrend: { direction: 'stable', delta: 0, deltaPercent: 0, improvingPercent: 0, decliningPercent: 0, stablePercent: 0 }
+        classQuartiles: { f1: { q1: null, med: null, q3: null }, f2: { q1: null, med: null, q3: null }, f3: { q1: null, med: null, q3: null }, f4: { q1: null, med: null, q3: null } },
+        macroTrend: { direction: 'stable' as const, delta: 0, deltaPercent: 0, improvingPercent: 0, decliningPercent: 0, stablePercent: 0 }
       };
     }
 
@@ -904,6 +904,7 @@ export default function Analysis() {
         studentCount,
         totalAbsentHours,
         avgAbsentHours,
+        avgAbsentHoursPerStudent: avgAbsentHours,
         absenceRatePercent,
         attendanceRatePercent,
         lateRecordsCount,

@@ -881,36 +881,6 @@ export default function App() {
     loadExportHistory(CURRICULUM_DB[initial.selectedTrackCode], initial.semester)
   );
 
-  const handleInsertCompetencyExercise = useCallback((ex: CompetencyExerciseItem) => {
-    const targetLesson = activeCustomLessons[0] || allTrackLessons[0];
-    if (!targetLesson) return;
-    const key = `${currentTrack.code}_${targetLesson.lessonFr}`;
-
-    setCustomQuestionsMap((prev) => {
-      const existing = prev[key] || {
-        ar: targetLesson.sampleExerciseAr || ["1) حدد مجموعة التعريف."],
-        fr: targetLesson.sampleExerciseFr || ["1) Déterminer l'ensemble de définition."],
-      };
-      return {
-        ...prev,
-        [key]: {
-          ar: [...existing.ar, ...ex.statementAr],
-          fr: [...existing.fr, ...ex.statementFr],
-        },
-      };
-    });
-
-    setCustomExerciseTitles((prev) => ({
-      ...prev,
-      0: isMission || docLang === "FR" ? `[${ex.code}] ${ex.titleFr}` : `[${ex.code}] ${ex.titleAr}`,
-    }));
-
-    setStatusMessage({
-      type: "success",
-      text: `✓ تم إدراج التمرين المرمز [${ex.code}] (${ex.points} ن · بلوم ${ex.bloomLevel}) بنجاح في الفرض/السلسلة!`,
-    });
-  }, [activeCustomLessons, allTrackLessons, currentTrack.code, docLang, isMission]);
-
   const handleOpenPedagogicalAiWithTask = useCallback(
     (task?: AiPedagogicalTask, lessonIdx: number = 0) => {
       setPedagogicalAiInitialView("WORKSPACE");
@@ -1969,6 +1939,36 @@ export default function App() {
   const totalCustomWeight = useMemo(() => {
     return activeCustomLessons.reduce((sum, l) => sum + l.weight, 0);
   }, [activeCustomLessons]);
+
+  const handleInsertCompetencyExercise = useCallback((ex: CompetencyExerciseItem) => {
+    const targetLesson = activeCustomLessons[0] || allTrackLessons[0];
+    if (!targetLesson) return;
+    const key = `${currentTrack.code}_${targetLesson.lessonFr}`;
+
+    setCustomQuestionsMap((prev) => {
+      const existing = prev[key] || {
+        ar: targetLesson.sampleExerciseAr || ["1) حدد مجموعة التعريف."],
+        fr: targetLesson.sampleExerciseFr || ["1) Déterminer l'ensemble de définition."],
+      };
+      return {
+        ...prev,
+        [key]: {
+          ar: [...existing.ar, ...ex.statementAr],
+          fr: [...existing.fr, ...ex.statementFr],
+        },
+      };
+    });
+
+    setCustomExerciseTitles((prev) => ({
+      ...prev,
+      0: isMission || docLang === "FR" ? `[${ex.code}] ${ex.titleFr}` : `[${ex.code}] ${ex.titleAr}`,
+    }));
+
+    setStatusMessage({
+      type: "success",
+      text: `✓ تم إدراج التمرين المرمز [${ex.code}] (${ex.points} ن · بلوم ${ex.bloomLevel}) بنجاح في الفرض/السلسلة!`,
+    });
+  }, [activeCustomLessons, allTrackLessons, currentTrack.code, docLang, isMission]);
 
   // حساب الإحصائيات الحية للفرض المحروس (مجموع النقط الفعلي، عدد الأسئلة، توزيع المستويات N1/N2/N3)
   const liveExamStats = useMemo(() => {
