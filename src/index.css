@@ -529,6 +529,109 @@ body.pedagogy-fullscreen-mode #react-pedagogy-root {
   font-weight: 600;
 }
 
+/* ============================================================================
+   الحل المبتكر 1: الضبط التلقائي للورقة الواحدة (1-Page Smart Fit Engine)
+   يضغط التباعدات بذكاء لاحتواء الفرض كاملاً ومنع انزلاق بضعة أسطر لصفحة ثانية
+   ============================================================================ */
+.moroccan-official-sheet.one-page-smart-fit {
+  font-size: 12.2px !important;
+  line-height: 1.82 !important;
+  padding: 12mm 10mm !important;
+}
+
+.moroccan-official-sheet.one-page-smart-fit .katex {
+  font-size: 1.02em !important;
+  line-height: 1.15 !important;
+}
+
+.moroccan-official-sheet.one-page-smart-fit .katex-display {
+  margin: 6px 0 !important;
+  padding: 1px 0 !important;
+}
+
+.moroccan-official-sheet.one-page-smart-fit ol > li,
+.moroccan-official-sheet.one-page-smart-fit ul > li {
+  margin-bottom: 6px !important;
+  line-height: 1.82 !important;
+}
+
+.moroccan-official-sheet.one-page-smart-fit .moroccan-academic-divider {
+  margin: 6px 0 8px 0 !important;
+  height: 3px !important;
+}
+
+.moroccan-official-sheet.one-page-smart-fit .moroccan-exercise-badge {
+  padding: 2.5px 8px !important;
+  font-size: 11.5px !important;
+}
+
+.moroccan-official-sheet.one-page-smart-fit .moroccan-exam-footer-notice {
+  margin-top: 10px !important;
+  padding-top: 4px !important;
+}
+
+/* ============================================================================
+   الحل المبتكر 2: نمط السحب والاستنساخ عالي التباين (Photocopy High-Contrast Mode)
+   مخصص لآلات السحب المدرسي والمطابع الرقمية (Régéoneur / Photocopieuse)
+   لتفادي البقع الرمادية وضمان خروج الأسئلة والصيغ بحبر أسود نقي 100%
+   ============================================================================ */
+.moroccan-official-sheet.photocopy-high-contrast {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: none !important;
+  filter: contrast(120%) !important;
+}
+
+.moroccan-official-sheet.photocopy-high-contrast * {
+  border-color: #000000 !important;
+  text-shadow: none !important;
+}
+
+.moroccan-official-sheet.photocopy-high-contrast .moroccan-exercise-badge {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+}
+
+.moroccan-official-sheet.photocopy-high-contrast .moroccan-bareme-badge {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1.5px solid #000000 !important;
+  font-weight: 900 !important;
+}
+
+.moroccan-official-sheet.photocopy-high-contrast .moroccan-seal-stamp {
+  border: 1.5px dashed #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.moroccan-official-sheet.photocopy-high-contrast .moroccan-dotted-guide {
+  border-bottom: 1.5px dotted #000000 !important;
+}
+
+.moroccan-official-sheet.photocopy-high-contrast svg {
+  stroke: #000000 !important;
+}
+
+/* ============================================================================
+   الحل المبتكر 3: وضع العرض الصفي التفاعلي (Classroom Datashow / Stylus Mode)
+   ============================================================================ */
+.question-projection-target {
+  position: relative;
+  transition: all 0.2s ease;
+  cursor: zoom-in;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.question-projection-target:hover {
+  background-color: rgba(6, 182, 212, 0.08);
+  outline: 2px dashed #06b6d4;
+}
+
+
 
 
 

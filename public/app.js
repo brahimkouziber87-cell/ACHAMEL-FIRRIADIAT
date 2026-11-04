@@ -1747,6 +1747,20 @@
             } else if (localSuccess) {
                 notifyStudentAutoSave('local_synced', { time: lastSuccessfulSaveTime });
             }
+
+            // الحل المبتكر 5: النسخ الاحتياطي اللحظي للطوارئ (Emergency Snapshot) كل 5 دقائق في IndexedDB
+            try {
+                const lastSnap = parseInt(localStorage.getItem('_emergency_snapshot_timestamp') || '0', 10);
+                if (Date.now() - lastSnap > 300000) {
+                    localStorage.setItem('_emergency_snapshot_timestamp', String(Date.now()));
+                    if (window.MathPedagogicalSystemIDB && typeof MathPedagogicalSystemIDB.saveShardedBackup === 'function') {
+                        MathPedagogicalSystemIDB.saveShardedBackup(db, {
+                            reason: 'periodic_5min_snapshot',
+                            createSnapshotShards: true
+                        }).catch(() => {});
+                    }
+                }
+            } catch (_) {}
         }
 
         window.addEventListener('beforeunload', () => {
@@ -9204,6 +9218,9 @@
         function switchTab(tab, force = false) {
             // دورة تنظيف الذاكرة وتخفيف العبء على المتصفح عند التنقل
             optimizeAppMemory();
+            if (typeof window.cleanupUnusedReactViews === 'function') {
+                try { window.cleanupUnusedReactViews(tab); } catch (_) {}
+            }
 
             if (tab === 'whiteboard') tab = 'distanceTeaching';
             if (tab === 'cahier' || tab === 'lessonLog' || tab === 'cahierTextes') tab = 'lessonlog';

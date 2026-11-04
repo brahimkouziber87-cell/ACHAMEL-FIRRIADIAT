@@ -1057,6 +1057,9 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
     "ALL" | "SUJET_ONLY" | "SOLUTIONS_ONLY" | "SPEC_GRID_ONLY"
   >("SUJET_ONLY");
   const [laserInkSaverMode, setLaserInkSaverMode] = React.useState<boolean>(false);
+  const [isOnePageFitActive, setIsOnePageFitActive] = React.useState<boolean>(false);
+  const [isPhotocopyContrastActive, setIsPhotocopyContrastActive] = React.useState<boolean>(false);
+  const [projectedQuestion, setProjectedQuestion] = React.useState<{ text: string; label?: string } | null>(null);
   const [showAdvancedPaperSettings, setShowAdvancedPaperSettings] = React.useState<boolean>(false);
 
   React.useEffect(() => {
@@ -3346,6 +3349,40 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
               </span>
             </button>
 
+            {/* الحل المبتكر 1: زر الضبط التلقائي للورقة الواحدة لمنع انزلاق بضعة أسطر للصفحة الثانية */}
+            <button
+              type="button"
+              onClick={() => setIsOnePageFitActive((v) => !v)}
+              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                isOnePageFitActive
+                  ? "bg-emerald-400 text-slate-950 border-emerald-300 font-black shadow-xs ring-2 ring-emerald-200"
+                  : "bg-slate-800/90 text-slate-200 border-slate-700 hover:text-white hover:bg-slate-800"
+              }`}
+              title="الضبط التلقائي للورقة الواحدة (1-Page Smart Fit): ضغط الهوامش وتباعدات KaTeX لاحتواء الفرض كاملاً في صفحة A4 واحدة"
+            >
+              <span>⚡</span>
+              <span className="hidden sm:inline">
+                {isOnePageFitActive ? "صفحة واحدة: مفعّل" : "ملاءمة صفحة واحدة"}
+              </span>
+            </button>
+
+            {/* الحل المبتكر 2: زر تباين السحب والاستنساخ المدرسي */}
+            <button
+              type="button"
+              onClick={() => setIsPhotocopyContrastActive((v) => !v)}
+              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                isPhotocopyContrastActive
+                  ? "bg-white text-slate-950 border-white font-black shadow-xs ring-2 ring-slate-300"
+                  : "bg-slate-800/90 text-slate-200 border-slate-700 hover:text-white hover:bg-slate-800"
+              }`}
+              title="نمط السحب والاستنساخ عالي التباين: إزالة التدرجات الرمادية وضمان خروج الأسئلة بالأسود النقي 100% على آلات السحب (Régéoneur)"
+            >
+              <span>📄</span>
+              <span className="hidden sm:inline">
+                {isPhotocopyContrastActive ? "تباين السحب: مفعّل" : "تباين السحب"}
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={() => setShowAdvancedPaperSettings((v) => !v)}
@@ -4231,6 +4268,10 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
           selectedLatexPkg.sheetSkinClass
         } ${selectedPaperSurf.cssClass} ${
           laserInkSaverMode ? "laser-ink-saver" : ""
+        } ${
+          isOnePageFitActive ? "one-page-smart-fit" : ""
+        } ${
+          isPhotocopyContrastActive ? "photocopy-high-contrast" : ""
         } ${
           effectiveEconomicMode ? "mode-two-up-print" : ""
         } ${
@@ -5641,7 +5682,17 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
                                     : "(برهان موجه بملء الفراغات) "
                                   : "";
                               return (
-                                <li key={qIdx} className="space-y-2 mb-3">
+                                <li
+                                  key={qIdx}
+                                  className="space-y-2 mb-3 question-projection-target"
+                                  title="انقر نقراً مزدوجاً لعرض السؤال بملء الشاشة على المسلاط الصفي (Mode Datashow)"
+                                  onDoubleClick={() =>
+                                    setProjectedQuestion({
+                                      text: q,
+                                      label: `التمرين ${idx + 1} — السؤال ${qIdx + 1}`,
+                                    })
+                                  }
+                                >
                                   <div className="inline">
                                     <span>
                                       {prefix && <span className="font-semibold">{prefix}</span>}
@@ -9216,6 +9267,65 @@ export const PrintablePreview: React.FC<PrintablePreviewProps> = React.memo(({
         </div>
       )}
       </div>
+
+      {/* الحل المبتكر 3: استوديو العرض الصفي والمسلاط (Classroom Projector Modal) */}
+      {projectedQuestion && (
+        <div
+          className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-8 no-print"
+          dir="rtl"
+          onClick={() => setProjectedQuestion(null)}
+        >
+          <div
+            className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-10 space-y-6 relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                  📽️
+                </span>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    وضع العرض الصفي والمسلاط (Mode TBI / Datashow)
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold">
+                    عرض السؤال بحجم مكبر مع صيغ رياضية فائقة الوضوح للتلاميذ في الفصل
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProjectedQuestion(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold cursor-pointer transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="py-6 px-5 bg-slate-50 rounded-2xl border border-slate-200/80 text-right">
+              {projectedQuestion.label && (
+                <div className="inline-block bg-slate-900 text-cyan-300 font-mono text-xs font-black px-3 py-1 rounded-lg mb-4">
+                  {projectedQuestion.label}
+                </div>
+              )}
+              <div className="text-lg sm:text-2xl font-bold text-slate-900 leading-[2.4] select-text">
+                <MathText text={projectedQuestion.text} />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 text-xs text-slate-500 font-bold border-t border-slate-100">
+              <span>انقر بالخارج أو على ✕ للعودة لمعاينة الفرض A4</span>
+              <button
+                type="button"
+                onClick={() => setProjectedQuestion(null)}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs cursor-pointer"
+              >
+                إغلاق العرض الصفي
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

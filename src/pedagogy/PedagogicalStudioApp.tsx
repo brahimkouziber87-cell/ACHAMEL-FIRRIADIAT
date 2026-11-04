@@ -6397,7 +6397,7 @@ export default function App() {
                   title="المختبرات الديداكتيكية والأدوات التخصصية للمفتش والأستاذ"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-100 fill-current shrink-0" />
-                  <span>المختبرات والأدوات (12)</span>
+                  <span>المختبرات والأدوات (13)</span>
                   <ChevronDown
                     className={`w-3 h-3 transition-transform ${
                       showLabsDropdown ? "rotate-180" : ""
@@ -6405,7 +6405,7 @@ export default function App() {
                   />
                 </button>
 
-                {/* القائمة المنسدلة المنبثقة لـ 12 مختبراً وأداة ديداكتيكية */}
+                {/* القائمة المنسدلة المنبثقة لـ 13 مختبراً وأداة ديداكتيكية */}
                 {showLabsDropdown && (
                   <>
                     <div
@@ -6716,6 +6716,32 @@ export default function App() {
                             <div>مولد النماذج وتصدير Moodle XML</div>
                             <div className="text-[9.5px] text-slate-500 font-normal">
                               نماذج متكافئة A/B/C/D وكثافة A4
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLabsDropdown(false);
+                            if (typeof (window as any).switchTab === 'function') {
+                              (window as any).switchTab('annual');
+                              setTimeout(() => {
+                                window.dispatchEvent(
+                                  new CustomEvent('selectAnalysisWorkspace', {
+                                    detail: { workspace: 'ai_remediation' },
+                                  })
+                                );
+                              }, 120);
+                            }
+                          }}
+                          className="w-full p-2 rounded-xl text-[11px] font-bold text-slate-800 hover:bg-rose-50 hover:text-rose-900 flex items-center gap-2 transition cursor-pointer text-right border-t border-slate-100 mt-1 pt-1.5"
+                        >
+                          <GraduationCap className="w-4 h-4 text-rose-600 shrink-0" />
+                          <div className="flex-1">
+                            <div>استوديو الدعم والتفويج العلاجي الذكي</div>
+                            <div className="text-[9.5px] text-slate-500 font-normal">
+                              توليد بطاقات علاج فردية مخصصة بناءً على نتائج التقويم
                             </div>
                           </div>
                         </button>

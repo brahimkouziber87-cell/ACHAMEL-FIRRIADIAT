@@ -165,4 +165,51 @@ if (pedagogyEl && pedagogyEl.style.display !== 'none') {
   initPedagogyView();
 }
 
+/**
+ * الحل المبتكر 4: محرك تنقية وإدارة الذاكرة الحية لجذور React (React Memory Lifecycle Manager)
+ * يفرغ المكونات الخاملة عند مغادرة التبويب أو عند تفعيل زر تحسين الذاكرة لمنع تسرب الـ RAM
+ */
+export const cleanupUnusedReactViews = (except?: string) => {
+  if (except !== 'analysis' && analysisRootInstance) {
+    const el = document.getElementById('annualPerformanceView');
+    if (!el || el.style.display === 'none') {
+      try {
+        analysisRootInstance.unmount();
+      } catch (_) {}
+      analysisRootInstance = null;
+    }
+  }
+  if (except !== 'dashboard' && dashboardViewRootInstance) {
+    const el = document.getElementById('dashboardView');
+    if (!el || el.style.display === 'none') {
+      try {
+        dashboardViewRootInstance.unmount();
+      } catch (_) {}
+      dashboardViewRootInstance = null;
+    }
+  }
+  if (except !== 'reports' && reportsEvolutionChartRootInstance) {
+    const el = document.getElementById('reportsView');
+    if (!el || el.style.display === 'none') {
+      try {
+        reportsEvolutionChartRootInstance.unmount();
+      } catch (_) {}
+      reportsEvolutionChartRootInstance = null;
+    }
+  }
+  if (except === 'FORCE_ALL' && pedagogyRootInstance) {
+    const el = document.getElementById('pedagogyView');
+    if (!el || el.style.display === 'none') {
+      try {
+        pedagogyRootInstance.unmount();
+      } catch (_) {}
+      pedagogyRootInstance = null;
+    }
+  }
+};
+
+(window as unknown as { cleanupUnusedReactViews: typeof cleanupUnusedReactViews }).cleanupUnusedReactViews = cleanupUnusedReactViews;
+window.addEventListener('optimizeMemoryRequested', () => cleanupUnusedReactViews());
+
+
 
