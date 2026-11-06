@@ -1,4 +1,6 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
+import compression from "compression";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
@@ -6,6 +8,40 @@ import QRCode from "qrcode";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, ThinkingLevel, Type } from "@google/genai";
 import { registerPedagogyRoutes } from "./pedagogyRoutes.ts";
+import { initApiAuth, aiAuthGuard } from "./authMiddleware.ts";
+
+/**
+ * Routes that call a paid/external AI provider (Gemini, Wolfram) or generate
+ * documents. They get a much tighter quota and a smaller body cap than the
+ * rest of the API.
+ */
+const AI_ROUTE_PREFIXES = [
+  "/api/ai/",
+  "/api/analyze-class",
+  "/api/generate-document",
+  "/api/simulate-imported-exam",
+  "/api/ai-convert-quiz",
+  "/api/generate-exercise-from-highlight",
+  "/api/ai-math-assistant",
+  "/api/wolfram/verify",
+  "/api/library/suggest-classification",
+  "/api/calendar/extract-decree-ai",
+  "/api/ai-compare-student-performance",
+];
+
+/** Reject oversized bodies early, before the JSON parser allocates memory. */
+function contentLengthGuard(maxBytes: number) {
+  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const declared = Number(req.headers["content-length"] || 0);
+    if (Number.isFinite(declared) && declared > maxBytes) {
+      res.status(413).json({
+        error: `حجم الطلب أكبر من الحد المسموح به (${Math.round(maxBytes / (1024 * 1024))} ميغابايت).`,
+      });
+      return;
+    }
+    next();
+  };
+}
 
 function getValidGeminiApiKey(): string | null {
   const key = process.env.GEMINI_API_KEY;
@@ -38,10 +74,94 @@ function createGeminiClient(apiKey: string): GoogleGenAI {
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const isProduction = process.env.NODE_ENV === "production" || process.argv[1]?.includes('dist');
 
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-  app.use(express.static(path.join(process.cwd(), 'public')));
+  // Enable Firebase ID-token verification when credentials are available.
+  await initApiAuth();
+
+  // Behind Cloud Run / a reverse proxy, req.ip must come from X-Forwarded-For
+  // so that rate limiting is applied per real client and not per proxy.
+  app.set("trust proxy", 1);
+  app.disable("x-powered-by");
+
+  // --------------------------------------------------------------------
+  // SECURITY: response headers (CSP is intentionally left to the host)
+  // --------------------------------------------------------------------
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "microphone=(self), camera=(), geolocation=()");
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    if (isProduction) {
+      res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+    next();
+  });
+
+  // Gzip/Brotli: the vanilla bundle is ~3 MB of JS and ~1.8 MB of HTML.
+  app.use(compression({ threshold: 1024 }));
+
+  // --------------------------------------------------------------------
+  // SECURITY: rate limiting
+  // --------------------------------------------------------------------
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 900,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: {
+      error: "عدد الطلبات كبير جداً. يرجى الانتظار بضع دقائق ثم إعادة المحاولة.",
+    },
+  });
+
+  const aiLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 60,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: {
+      error: "تم بلوغ الحد الأقصى لطلبات الذكاء الاصطناعي. يرجى المحاولة بعد عشر دقائق.",
+    },
+  });
+
+  const shareLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 300,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: {
+      error: "عدد كبير من طلبات المشاركة. يرجى المحاولة بعد قليل.",
+    },
+  });
+
+  app.use("/api", apiLimiter);
+  app.use(AI_ROUTE_PREFIXES, aiLimiter);
+  app.use("/api/share", shareLimiter);
+
+  // Firebase ID-token guard: active whenever Firebase Admin is configured.
+  app.use(AI_ROUTE_PREFIXES, aiAuthGuard);
+  app.use("/api/share/create", aiAuthGuard);
+
+  // AI payloads are text-based: 2 MB is far above any legitimate request.
+  app.use(AI_ROUTE_PREFIXES, contentLengthGuard(2 * 1024 * 1024));
+
+  app.use(express.json({ limit: "25mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+  app.use(express.static(path.join(process.cwd(), 'public'), {
+    etag: true,
+    lastModified: true,
+    setHeaders(res, filePath) {
+      if (filePath.endsWith(".html")) {
+        // Always revalidate the shell so new releases are picked up.
+        res.setHeader("Cache-Control", "no-cache");
+      } else if (filePath.includes(`${path.sep}vendor${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=604800");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=86400");
+      }
+    },
+  }));
 
   // Register all Pedagogical Engineering & Assessment APIs
   registerPedagogyRoutes(app);
@@ -2571,32 +2691,110 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
   // ENCRYPTED SHARING ENGINE FOR STUDENT RECORDS AND PEDAGOGICAL REPORTS
   // (مشاركة سجلات التلميذ والتقارير عبر رمز QR ورابط مباشر مشفر)
   // ====================================================================
-  const SHARE_SECRET = process.env.SHARE_SECRET || "math_pedagogical_vault_2026_super_secure_key_#99";
-  const sharedRecordsStore = new Map<string, {
+  // ==================================================================
+  // SECURITY: a real secret is mandatory. Never ship a hard-coded key.
+  // If SHARE_SECRET is missing (or too short), generate an ephemeral one
+  // for this process rather than falling back to a public constant.
+  // ==================================================================
+  const SHARE_SECRET = (() => {
+    const fromEnv = (process.env.SHARE_SECRET || '').trim();
+    if (fromEnv.length >= 32) return fromEnv;
+    console.warn(
+      '[security] SHARE_SECRET is missing or shorter than 32 chars. ' +
+      'A random secret was generated for this process: existing share links ' +
+      'will stop working after a restart. Set SHARE_SECRET in production.'
+    );
+    return crypto.randomBytes(48).toString('base64url');
+  })();
+
+  const PBKDF2_ITERATIONS = Number(process.env.SHARE_PBKDF2_ITERATIONS || 600000);
+  const PIN_PBKDF2_ITERATIONS = 210000;
+  const MAX_PIN_ATTEMPTS = 10;
+  const PIN_LOCK_MS = 15 * 60 * 1000;
+
+  type SharedRecord = {
     id: string;
     type: 'student' | 'report';
     title: string;
     subtitle?: string;
     teacherName?: string;
     schoolName?: string;
+    /** Establishment / tenant key. Optional for backward compatibility. */
+    institution?: string;
     encryptedData: string;
     salt: string;
     iv: string;
     tag: string;
     hasPin: boolean;
     pinHash?: string;
+    pinSalt?: string;
     createdAt: string;
     expiresAt: string;
     viewCount: number;
-  }>();
+  };
 
-  function deriveKey(password: string, salt: Buffer): Buffer {
-    return crypto.pbkdf2Sync(password, salt, 10000, 32, 'sha256');
+  const sharedRecordsStore = new Map<string, SharedRecord>();
+  const pinAttempts = new Map<string, { count: number; lockedUntil: number }>();
+
+  // Optional disk persistence so self-hosted / desktop deployments keep their
+  // share links across restarts. Cloud Run's filesystem is ephemeral, so a
+  // managed database is still required for horizontal scaling.
+  const SHARE_STORE_PATH = process.env.SHARE_STORE_PATH
+    || path.join(process.cwd(), 'data', 'shares.json');
+
+  function persistShares(): void {
+    try {
+      fs.mkdirSync(path.dirname(SHARE_STORE_PATH), { recursive: true });
+      const tmp = SHARE_STORE_PATH + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(Array.from(sharedRecordsStore.values())), 'utf8');
+      fs.renameSync(tmp, SHARE_STORE_PATH);
+    } catch (err) {
+      console.warn('Could not persist share store:', (err as any)?.message || err);
+    }
   }
 
-  function encryptPayload(data: any, pin?: string): { encryptedData: string; salt: string; iv: string; tag: string } {
+  function loadPersistedShares(): void {
+    try {
+      if (!fs.existsSync(SHARE_STORE_PATH)) return;
+      const raw = fs.readFileSync(SHARE_STORE_PATH, 'utf8');
+      const items = JSON.parse(raw);
+      if (!Array.isArray(items)) return;
+      const now = Date.now();
+      for (const item of items) {
+        if (item && typeof item.id === 'string' && item.expiresAt && new Date(item.expiresAt).getTime() > now) {
+          sharedRecordsStore.set(item.id, item as SharedRecord);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load persisted shares:', (err as any)?.message || err);
+    }
+  }
+  loadPersistedShares();
+
+  function pbkdf2Async(password: string, salt: Buffer, iterations: number): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      crypto.pbkdf2(password, salt, iterations, 32, 'sha256', (err, key) => {
+        if (err) reject(err);
+        else resolve(key);
+      });
+    });
+  }
+
+  function deriveKeyAsync(password: string, salt: Buffer): Promise<Buffer> {
+    return pbkdf2Async(password, salt, PBKDF2_ITERATIONS);
+  }
+
+  function hashPinAsync(pin: string, salt: Buffer): Promise<Buffer> {
+    return pbkdf2Async(pin, salt, PIN_PBKDF2_ITERATIONS);
+  }
+
+  function safeEqual(a: Buffer, b: Buffer): boolean {
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  }
+
+  async function encryptPayload(data: any, pin?: string): Promise<{ encryptedData: string; salt: string; iv: string; tag: string }> {
     const salt = crypto.randomBytes(16);
-    const key = deriveKey(pin ? `${pin}:${SHARE_SECRET}` : SHARE_SECRET, salt);
+    const key = await deriveKeyAsync(pin ? `${pin}:${SHARE_SECRET}` : SHARE_SECRET, salt);
     const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
     const jsonStr = JSON.stringify(data);
@@ -2612,11 +2810,11 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
     };
   }
 
-  function decryptPayload(encryptedData: string, saltBase64: string, ivBase64: string, tagBase64: string, pin?: string): any {
+  async function decryptPayload(encryptedData: string, saltBase64: string, ivBase64: string, tagBase64: string, pin?: string): Promise<any> {
     const salt = Buffer.from(saltBase64, 'base64');
     const iv = Buffer.from(ivBase64, 'base64');
     const tag = Buffer.from(tagBase64, 'base64');
-    const key = deriveKey(pin ? `${pin}:${SHARE_SECRET}` : SHARE_SECRET, salt);
+    const key = await deriveKeyAsync(pin ? `${pin}:${SHARE_SECRET}` : SHARE_SECRET, salt);
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
     decipher.setAuthTag(tag);
     let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
@@ -2635,46 +2833,75 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
         pin,
         expiryDays = 30,
         teacherName = '',
-        schoolName = ''
+        schoolName = '',
+        institution = ''
       } = req.body || {};
 
       if (!data) {
         return res.status(400).json({ error: "البيانات المراد مشاركتها غير متوفرة." });
       }
 
-      const shareId = 'sh_' + crypto.randomBytes(6).toString('base64url');
-      const { encryptedData, salt, iv, tag } = encryptPayload(data, pin);
+      // Input hardening: bound every free-form field before encryption/storage.
+      const pinText = pin === undefined || pin === null ? '' : String(pin).trim();
+      if (pinText && (pinText.length < 4 || pinText.length > 64)) {
+        return res.status(400).json({ error: "يجب أن يكون القن السري بين 4 و64 حرفاً." });
+      }
 
-      const hasPin = Boolean(pin && pin.trim().length > 0);
-      const pinHash = hasPin ? crypto.createHash('sha256').update(pin.trim()).digest('hex') : undefined;
+      const dataJson = JSON.stringify(data);
+      if (Buffer.byteLength(dataJson, 'utf8') > 2 * 1024 * 1024) {
+        return res.status(413).json({ error: "حجم البيانات المراد مشاركتها يتجاوز 2 ميغابايت." });
+      }
+
+      const safeExpiryDays = Math.min(365, Math.max(1, Number(expiryDays) || 30));
+
+      const shareId = 'sh_' + crypto.randomBytes(16).toString('base64url');
+      const { encryptedData, salt, iv, tag } = await encryptPayload(data, pinText || undefined);
+
+      const hasPin = pinText.length > 0;
+      let pinHash: string | undefined;
+      let pinSalt: string | undefined;
+      if (hasPin) {
+        const pinSaltBuf = crypto.randomBytes(16);
+        pinSalt = pinSaltBuf.toString('base64');
+        pinHash = (await hashPinAsync(pinText, pinSaltBuf)).toString('base64');
+      }
 
       const now = new Date();
-      const expiresAt = new Date(now.getTime() + (expiryDays * 24 * 60 * 60 * 1000)).toISOString();
+      const expiresAt = new Date(now.getTime() + (safeExpiryDays * 24 * 60 * 60 * 1000)).toISOString();
+
+      const safeSchoolName = String(schoolName || '').slice(0, 200);
+      const safeInstitution = String(institution || '').slice(0, 200) || safeSchoolName;
 
       const item = {
         id: shareId,
-        type: type as 'student' | 'report',
-        title: title || 'سجل بيداغوجي',
-        subtitle,
-        teacherName,
-        schoolName,
+        type: (type === 'report' ? 'report' : 'student') as 'student' | 'report',
+        title: String(title || 'سجل بيداغوجي').slice(0, 300),
+        subtitle: String(subtitle || '').slice(0, 500),
+        teacherName: String(teacherName || '').slice(0, 200),
+        schoolName: safeSchoolName,
+        institution: safeInstitution,
         encryptedData,
         salt,
         iv,
         tag,
         hasPin,
         pinHash,
+        pinSalt,
         createdAt: now.toISOString(),
         expiresAt,
         viewCount: 0
       };
 
       sharedRecordsStore.set(shareId, item);
+      persistShares();
 
       // Determine public share URL
       const host = req.get('x-forwarded-host') || req.get('host') || 'localhost:3000';
       const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
-      const shareUrl = `${protocol}://${host}/?share=${shareId}`;
+      const appShareUrl = `${protocol}://${host}/?share=${shareId}`;
+      const portalShareUrl = `${protocol}://${host}/s/${shareId}`;
+      // Student records open in the dedicated read-only student portal.
+      const shareUrl = item.type === 'student' ? portalShareUrl : appShareUrl;
 
       // Generate visual QR Code
       const qrCodeDataUrl = await QRCode.toDataURL(shareUrl, {
@@ -2690,6 +2917,8 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
         success: true,
         shareId,
         shareUrl,
+        appShareUrl,
+        portalUrl: portalShareUrl,
         qrCodeDataUrl,
         hasPin,
         expiresAt
@@ -2701,7 +2930,7 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
   });
 
   // 2. Retrieve a shared record (with optional PIN verification)
-  app.get("/api/share/:id", (req, res) => {
+  app.get("/api/share/:id", async (req, res) => {
     try {
       const shareId = req.params.id;
       const record = sharedRecordsStore.get(shareId);
@@ -2713,12 +2942,25 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
       // Check expiry
       if (new Date(record.expiresAt).getTime() < Date.now()) {
         sharedRecordsStore.delete(shareId);
+        pinAttempts.delete(shareId);
+        persistShares();
         return res.status(410).json({ error: "انتهت فترة صلاحية هذا الرابط المشفر." });
       }
 
-      const clientPin = (req.headers['x-share-pin'] as string || req.query.pin as string || '').trim();
+      const clientPin = String((req.headers['x-share-pin'] as string) || (req.query.pin as string) || '').trim();
 
       if (record.hasPin) {
+        const now = Date.now();
+        const attempt = pinAttempts.get(shareId) || { count: 0, lockedUntil: 0 };
+        if (attempt.lockedUntil > now) {
+          const minutesLeft = Math.ceil((attempt.lockedUntil - now) / 60000);
+          return res.status(429).json({
+            success: false,
+            requiresPin: true,
+            error: `تم قفل هذا الرابط مؤقتاً بعد محاولات خاطئة متكررة. أعد المحاولة بعد ${minutesLeft} دقيقة.`
+          });
+        }
+
         if (!clientPin) {
           return res.json({
             success: false,
@@ -2727,12 +2969,26 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
             subtitle: record.subtitle,
             type: record.type,
             teacherName: record.teacherName,
-            schoolName: record.schoolName
+            schoolName: record.schoolName,
+            institution: record.institution || record.schoolName
           });
         }
 
-        const clientPinHash = crypto.createHash('sha256').update(clientPin).digest('hex');
-        if (clientPinHash !== record.pinHash) {
+        // Salted PBKDF2 comparison with constant-time equality.
+        const clientPinHash = record.pinSalt
+          ? await hashPinAsync(clientPin, Buffer.from(record.pinSalt, 'base64'))
+          : Buffer.alloc(0);
+        const storedPinHash = record.pinHash
+          ? Buffer.from(record.pinHash, 'base64')
+          : Buffer.alloc(0);
+
+        if (!record.pinSalt || !safeEqual(clientPinHash, storedPinHash)) {
+          attempt.count += 1;
+          if (attempt.count >= MAX_PIN_ATTEMPTS) {
+            attempt.lockedUntil = now + PIN_LOCK_MS;
+            attempt.count = 0;
+          }
+          pinAttempts.set(shareId, attempt);
           return res.status(401).json({
             success: false,
             requiresPin: true,
@@ -2741,11 +2997,13 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
             subtitle: record.subtitle
           });
         }
+
+        pinAttempts.delete(shareId);
       }
 
       // Decrypt data
       try {
-        const decryptedData = decryptPayload(
+        const decryptedData = await decryptPayload(
           record.encryptedData,
           record.salt,
           record.iv,
@@ -2762,6 +3020,7 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
           subtitle: record.subtitle,
           teacherName: record.teacherName,
           schoolName: record.schoolName,
+          institution: record.institution || record.schoolName,
           createdAt: record.createdAt,
           expiresAt: record.expiresAt,
           data: decryptedData
@@ -2801,7 +3060,7 @@ function generateICalFeed(events: PortfolioCalendarEvent[], calendarTitle = 'م�
     const studentName = payload?.studentName || 'التلميذ(ة)';
     const className = payload?.className || 'القسم';
     const schoolName = payload?.schoolName || 'المؤسسة التعليمية';
-    const teacherName = payload?.teacherName || 'الأستاذ إبراهيم قزيبر';
+    const teacherName = payload?.teacherName || 'الأستاذ(ة)';
     const subjectName = payload?.subjectName || 'مادة الرياضيات';
     const tone = payload?.tone || 'supportive';
     const customNote = (payload?.customNote || '').trim();
@@ -3008,14 +3267,42 @@ ${selectedToneDesc}
     }
   });
 
+  // ------------------------------------------------------------------
+  // Student portal: clean read-only link /s/<shareId>
+  // Serves the standalone portal shell; the encrypted payload is fetched
+  // from /api/share/:id by the page itself.
+  // ------------------------------------------------------------------
+  app.get('/s/:id', (_req, res) => {
+    const baseDir = isProduction
+      ? path.join(process.cwd(), 'dist')
+      : path.join(process.cwd(), 'public');
+    res.sendFile(path.join(baseDir, 'student-portal.html'));
+  });
+
+  // ------------------------------------------------------------------
+  // Unknown API routes must return JSON 404, never the SPA HTML shell.
+  // Without this guard, clients calling a renamed/removed endpoint receive
+  // HTML with status 200 and fail later with a confusing JSON parse error.
+  // ------------------------------------------------------------------
+  app.use('/api', (_req, res) => {
+    res.status(404).json({
+      error: "واجهة API غير موجودة.",
+      code: "API_NOT_FOUND",
+    });
+  });
+
   // Vite middleware for development
-  const isProduction = process.env.NODE_ENV === "production" || process.argv[1]?.includes('dist');
   if (!isProduction) {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
         hmr: false,
-        watch: null,
+        // Keep the dev server in sync with index.html and public/ edits.
+        // `watch: null` used to freeze Vite's HTML transform cache, so the
+        // browser kept receiving the script tags from the first boot.
+        watch: {
+          ignored: ['**/node_modules/**', '**/dist/**', '**/data/**'],
+        },
       },
       appType: "spa",
     });
@@ -3105,6 +3392,35 @@ export function createHotContext(ownerPath) {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  // ------------------------------------------------------------------
+  // SECURITY: JSON error handler (no stack traces / HTML to clients)
+  // ------------------------------------------------------------------
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (res.headersSent) return next(err);
+    if (!req.path.startsWith("/api/")) return next(err);
+
+    if (err && err.type === "entity.too.large") {
+      res.status(413).json({
+        error: "حجم البيانات المرسلة كبير جداً.",
+        code: "PAYLOAD_TOO_LARGE",
+      });
+      return;
+    }
+    if (err instanceof SyntaxError && err && "body" in err) {
+      res.status(400).json({
+        error: "صيغة JSON المرسلة غير صحيحة.",
+        code: "INVALID_JSON",
+      });
+      return;
+    }
+
+    console.error("[server] unhandled API error:", err?.message || err);
+    res.status(500).json({
+      error: "حدث خطأ غير متوقع في الخادم.",
+      code: "INTERNAL_ERROR",
+    });
+  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);

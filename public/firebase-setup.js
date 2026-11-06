@@ -18,6 +18,21 @@ const auth = getAuth(app);
 setLogLevel('silent');
 const dbFirestore = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }, firebaseConfig.firestoreDatabaseId);
 
+// ------------------------------------------------------------------
+// Provides a fresh Firebase ID token for authenticated API calls.
+// Used by the fetch wrapper in /security-utils.js. Returns null when the
+// user is not signed in, so the server can answer with AUTH_REQUIRED.
+// ------------------------------------------------------------------
+window.getFirebaseIdToken = async function (forceRefresh) {
+  try {
+    if (!auth || !auth.currentUser) return null;
+    return await auth.currentUser.getIdToken(Boolean(forceRefresh));
+  } catch (err) {
+    console.warn('Could not obtain Firebase ID token:', err);
+    return null;
+  }
+};
+
 const OperationType = {
   CREATE: 'create',
   UPDATE: 'update',
@@ -121,7 +136,7 @@ function computeGmailUid(email) {
 window.computeGmailUid = computeGmailUid;
 
 function getGmailHistoryList() {
-    const defaults = ['brahim.kouziber87@gmail.com'];
+    const defaults = [];
     try {
         if (window.db && window.db.teacherProfile && window.db.teacherProfile.email) {
             const tpEmail = normalizeGmailAddress(window.db.teacherProfile.email);
@@ -332,7 +347,10 @@ async function executeFirestoreUserWriteToUid(targetUid, userEmail, payloadStrin
                 chunk: chunks[idx],
                 index: idx,
                 totalChunks: chunks.length,
-                lastUpdated: String(nowIso).slice(0, 64)
+                lastUpdated: String(nowIso).slice(0, 64),
+                // Required by firestore.rules: a chunk may only be written by
+                // the signed-in account that owns this e-mail address.
+                userEmail: String(userEmail || '').slice(0, 256)
             });
         }
 
@@ -352,23 +370,38 @@ async function executeFirestoreUserWriteToUid(targetUid, userEmail, payloadStrin
 async function executeFirestoreUserWrite(user, payloadString, compressed, rawLength, nowIso) {
     const nowTs = Date.now();
     const cleanEmail = normalizeGmailAddress(user.email || '');
+    // The backup is written only under the verified Firebase UID. The legacy
+    // gmail_* mirror was removed: Firestore rules cannot verify that a slot id
+    // belongs to the caller's e-mail, so any write there could overwrite
+    // another teacher's backup. Legacy slots stay readable by their owner.
     await executeFirestoreUserWriteToUid(user.uid, cleanEmail, payloadString, compressed, rawLength, nowIso, nowTs);
-
-    // مرآة متزامنة لمعرّف Gmail القياسي لضمان التوافق الفوري بين الدخول الرسمي والدخول المباشر بالبريد
-    if (cleanEmail) {
-        const gmailSlotUid = computeGmailUid(cleanEmail);
-        if (gmailSlotUid && gmailSlotUid !== user.uid) {
-            try {
-                await executeFirestoreUserWriteToUid(gmailSlotUid, cleanEmail, payloadString, compressed, rawLength, nowIso, nowTs);
-            } catch (mirrorErr) {
-                console.warn('Mirror Gmail slot sync notice:', mirrorErr);
-            }
-        }
-    }
 }
 
 window.syncToFirebase = async (data, preSerialized) => {
     const user = getEffectiveUser();
+
+    // ------------------------------------------------------------------
+    // SECURITY GUARD: the legacy "direct Gmail" mode has no verified
+    // Firebase identity. firestore.rules now requires a verified Google
+    // session to read or write backups, so we block this path explicitly
+    // instead of letting it fail with an opaque permission-denied error.
+    // ------------------------------------------------------------------
+    if (user && user.uid && !auth.currentUser) {
+        const guardResult = {
+            success: false,
+            cloud: true,
+            error: 'AUTH_REQUIRED',
+            reason: 'official_signin_required'
+        };
+        try {
+            if (typeof window.showAppToast === 'function') {
+                window.showAppToast('🔐 لأسباب أمنية، النسخ السحابي يتطلب تسجيل الدخول الرسمي بحساب Google.', 'error');
+            }
+            window.dispatchEvent(new CustomEvent('cloudSyncResult', { detail: guardResult }));
+        } catch (_) {}
+        return guardResult;
+    }
+
     if (user && user.uid) {
         const userDocPath = `users/${user.uid}`;
         try {
@@ -942,7 +975,7 @@ function showDriveNewDeviceModal(cloudSummary) {
           <span class="ui-icon"><span data-lucide="cloud-download" data-size="30"></span></span>
         </div>
         <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">تم التعرف على آخر تحديث سحابي!</h3>
-        <p style="font-size: 0.85rem; color: #64748b; margin: 0;">أهلاً بك أستاذ <strong>${cloudSummary.teacherName}</strong>. تم العثور على أحدث نسخة لبياناتك ومادتك في (${cloudSummary.source}).</p>
+        <p style="font-size: 0.85rem; color: #64748b; margin: 0;">أهلاً بك أستاذ <strong>${window.escapeHtml(cloudSummary.teacherName)}</strong>. تم العثور على أحدث نسخة لبياناتك ومادتك في (${window.escapeHtml(cloudSummary.source)}).</p>
       </div>
 
       <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; font-size: 0.84rem;">

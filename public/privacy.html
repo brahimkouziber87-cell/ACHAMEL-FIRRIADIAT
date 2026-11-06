@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>سياسة الخصوصية وحماية المعطيات الشخصية — منظومة التدبير التربوي</title>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --brand: #1d4ed8;
+      --border: #cbd5e1;
+      --bg: #f1f5f9;
+      --surface: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Tahoma", "Noto Naskh Arabic", "Cairo", system-ui, sans-serif;
+      line-height: 1.85;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a, #1e3a8a);
+      color: #fff;
+      padding: 26px 18px;
+    }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+    header h1 { margin: 0 0 4px; font-size: 1.35rem; }
+    header p { margin: 0; color: #cbd5e1; font-size: 0.86rem; }
+    main { padding: 22px 0 60px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+    h2 { font-size: 1.05rem; margin: 0 0 10px; color: #1e293b; }
+    h3 { font-size: 0.95rem; margin: 16px 0 6px; }
+    p, li { font-size: 0.9rem; }
+    ul { padding-inline-start: 22px; }
+    li { margin-bottom: 6px; }
+    .muted { color: var(--muted); font-size: 0.82rem; }
+    .badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e3a8a;
+      border: 1px solid #93c5fd;
+      border-radius: 999px;
+      padding: 3px 12px;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+    a { color: var(--brand); }
+    .back { display: inline-block; margin-top: 8px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin-top: 8px; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: start; vertical-align: top; }
+    th { background: #f8fafc; }
+    :focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+    @media print {
+      body { background: #fff; }
+      header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+      header p { color: #000; }
+      .card { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>سياسة الخصوصية وحماية المعطيات الشخصية</h1>
+      <p>منظومة التدبير التربوي — مادة الرياضيات • آخر تحديث: نوفمبر 2026</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="card">
+      <span class="badge">مبدأ أساسي: التخزين المحلي أولاً</span>
+      <p>
+        صُمّمت هذه المنظومة لتعمل أساساً على جهاز الأستاذ(ة) دون إرسال معطيات التلاميذ إلى خوادم
+        تابعة لنا. تُخزَّن قاعدة البيانات محلياً في متصفح الجهاز (LocalStorage وIndexedDB)، ولا
+        تُرفع إلى السحابة إلا إذا اختار الأستاذ(ة) صراحةً تفعيل النسخ الاحتياطي أو المشاركة.
+      </p>
+      <p class="muted">
+        هذا المستند إرشادي ويهدف إلى الامتثال لمقتضيات القانون المغربي 09-08 المتعلق بحماية
+        الأشخاص الطبيعيين في ما يخص معالجة المعطيات ذات الطابع الشخصي، وتوجيهات اللجنة الوطنية
+        لمراقبة حماية المعطيات ذات الطابع الشخصي (CNDP).
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>1. المسؤول عن المعالجة</h2>
+      <p>
+        المسؤول عن معالجة المعطيات هو الأستاذ(ة) أو المؤسسة التعليمية التي تستعمل المنظومة.
+        المنظومة أداة تقنية فقط ولا تجمع المعطيات لصالح جهة ثالثة.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>2. المعطيات المعالجة وأغراضها</h2>
+      <table>
+        <thead>
+          <tr><th>الفئة</th><th>أمثلة</th><th>الغرض</th><th>الأساس</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>معطيات التلاميذ</td>
+            <td>الاسم، رقم مسار، القسم، النقط، الغياب، الملاحظات السلوكية</td>
+            <td>التدبير البيداغوجي، التقويم، تتبع المواظبة، المعالجة الفردية</td>
+            <td>مصلحة تربوية مشروعة</td>
+          </tr>
+          <tr>
+            <td>معطيات الأستاذ(ة)</td>
+            <td>الاسم، المؤسسة، المدينة، البريد المهني</td>
+            <td>الترويسات الرسمية، إعداد الوثائق، المزامنة الاختيارية</td>
+            <td>تنفيذ المهام المهنية</td>
+          </tr>
+          <tr>
+            <td>معطيات تقنية</td>
+            <td>تفضيلات الواجهة، سجل الأخطاء المحلي</td>
+            <td>تحسين الاستعمال وتشخيص الأعطال</td>
+            <td>مصلحة مشروعة</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="muted">لا تُعالج معطيات حساسة (صحية، دينية، سياسية) خارج ما تدعو إليه الوثائق التربوية الرسمية.</p>
+    </div>
+
+    <div class="card">
+      <h2>3. مدة الاحتفاظ</h2>
+      <ul>
+        <li>تبقى البيانات على جهازك ما لم تحذفها بنفسك أو تحذفها المؤسسة.</li>
+        <li>روابط المشاركة المشفّرة تنتهي تلقائياً بعد المدة المحددة عند إنشائها (30 يوماً افتراضياً، بحد أقصى سنة).</li>
+        <li>يُنصح بأرشفة بيانات الموسم الدراسي وحذف بيانات التلاميذ الذين لم يعودوا تحت مسؤوليتك.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>4. المشاركة والخدمات الخارجية</h2>
+      <p>لا تُشارك أي معطيات إلا في الحالات التالية وبموافقتك:</p>
+      <ul>
+        <li><strong>روابط مشفّرة:</strong> عند إنشاء رابط لتلميذ أو تقرير، تُشفَّر البيانات على الخادم (AES-256-GCM) وقد تُحمى بقن سري.</li>
+        <li><strong>Firebase / Google:</strong> عند تسجيل الدخول أو تفعيل النسخ السحابي، تُعالج المعطيات وفق سياسات Google.</li>
+        <li><strong>Gemini AI:</strong> عند استعمال ميزات الذكاء الاصطناعي، يُرسل النص المُدخل إلى خدمة Google Gemini. لا تُرسل معطيات تعريفية غير ضرورية.</li>
+        <li><strong>شبكات توصيل المحتوى (CDN):</strong> تُحمَّل مكتبات الواجهة (KaTeX، Chart.js…) من خوادم خارجية وقد تسجّل عنوان IP.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>5. حقوق الأشخاص المعنيين</h2>
+      <p>وفق القانون 09-08، لكل شخص معني الحق في:</p>
+      <ul>
+        <li>الاطلاع على معطياته والحصول على نسخة منها.</li>
+        <li>تصحيح المعطيات غير الدقيقة أو الناقصة.</li>
+        <li>الاعتراض على المعالجة وحذف المعطيات في الحدود القانونية.</li>
+        <li>تقديم شكاية إلى اللجنة الوطنية CNDP.</li>
+      </ul>
+      <p class="muted">
+        عملياً: يمكنك تصدير كل بياناتك المحلية من «الإعدادات ← الخصوصية والبيانات ← تصدير بياناتي»،
+        وحذفها نهائياً من نفس المكان.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>6. الأمن</h2>
+      <ul>
+        <li>تشفير روابط المشاركة، وتجزئة القن السري (PBKDF2) مع مقارنة زمن ثابت.</li>
+        <li>تحديد معدل الطلبات، وتعقيم محتوى الذكاء الاصطناعي قبل عرضه (DOMPurify).</li>
+        <li>مصادقة اختيارية بـ Firebase ID Token على واجهات API الحساسة.</li>
+        <li>لا يوجد نظام معلوماتي آمن بنسبة 100%: احتفظ بنسخة احتياطية واحمِ جهازك بكلمة سر.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>7. ملفات تعريف الارتباط والتخزين المحلي</h2>
+      <p>
+        لا تستعمل المنظومة ملفات تعريف ارتباط إعلانية. تعتمد على التخزين المحلي لتشغيل الواجهة
+        وحفظ بياناتك على جهازك، وعلى Service Worker للعمل دون اتصال. يمكنك مسحها في أي وقت من
+        إعدادات المتصفح أو من أدوات الخصوصية داخل المنظومة.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>8. التحديثات والتواصل</h2>
+      <p>
+        قد تُحدَّث هذه السياسة عند إضافة ميزات جديدة. يُنشر تاريخ آخر تحديث في أعلى الصفحة.
+        لأي سؤال أو طلب يتعلق بمعطياتك، تواصل مع الأستاذ(ة) أو المؤسسة المسؤولة عن استعمال المنظومة.
+      </p>
+      <p class="muted">
+        مرجع قانوني: القانون رقم 09-08 الصادر بتنفيذه الظهير الشريف رقم 1.09.15 (18 فبراير 2009)،
+        واللجنة الوطنية لمراقبة حماية المعطيات ذات الطابع الشخصي (CNDP).
+      </p>
+      <a class="back" href="/">← العودة إلى المنظومة</a>
+    </div>
+  </main>
+</body>
+</html>

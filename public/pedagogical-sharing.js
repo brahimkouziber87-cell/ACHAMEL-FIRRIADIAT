@@ -160,7 +160,7 @@
                         remediation: optRemediation
                     },
                     // Grades & Continuous Assessment
-                    grades: optGrades ? (portfolioData.gradesData || portfolioData.grades || {}) : null,
+                    grades: optGrades ? (portfolioData.examsData || portfolioData.gradesData || portfolioData.grades || {}) : null,
                     academicMetrics: optGrades ? {
                         s1Avg: portfolioData.s1Avg,
                         s2Avg: portfolioData.s2Avg,
@@ -183,17 +183,21 @@
                         unjustifiedHours: portfolioData.unjustifiedHours || 0,
                         justifiedHours: portfolioData.justifiedHours || 0,
                         lateCount: portfolioData.lateCount || 0,
-                        records: (portfolioData.absencesList || []).slice(0, 30)
+                        records: (portfolioData.absencesTimeline || portfolioData.absencesList || []).slice(0, 30)
                     } : null,
                     // Behavior & Homework Notes
                     behavior: optBehavior ? {
                         missedHomework: portfolioData.missedHomeworkCount || 0,
-                        notesList: (portfolioData.behaviorNotesList || []).slice(0, 20)
+                        notesList: (portfolioData.behaviorNotesList || (portfolioData.behaviorRecord && portfolioData.behaviorRecord.note ? [portfolioData.behaviorRecord.note] : [])).slice(0, 20)
                     } : null,
                     // Targeted Remediation Notes
                     remediation: optRemediation ? {
-                        notes: portfolioData.remediationNotes || 'متابعة بيداغوجية مستمرة وتعزيز التحكم في البرهان الرياضي وحل المسائل.',
-                        actionItems: portfolioData.suggestedActions || ['التركيز على التمارين التطبيقية المتدرجة', 'المواظبة على إنجاز الواجبات المنزلية']
+                        notes: (typeof portfolioData.portfolioNotes === 'string' && portfolioData.portfolioNotes)
+                            || (portfolioData.failureRiskData && portfolioData.failureRiskData.diagnosticSummary)
+                            || 'متابعة بيداغوجية مستمرة وتعزيز التحكم في البرهان الرياضي وحل المسائل.',
+                        actionItems: portfolioData.suggestedActions
+                            || (portfolioData.failureRiskData && portfolioData.failureRiskData.recommendedActions)
+                            || ['التركيز على التمارين التطبيقية المتدرجة', 'المواظبة على إنجاز الواجبات المنزلية']
                     } : null
                 };
 
@@ -227,7 +231,8 @@
                     pin: pin,
                     expiryDays: expiryDays,
                     teacherName: teacherName,
-                    schoolName: schoolName
+                    schoolName: schoolName,
+                    institution: teacherProfile.institution || schoolName
                 })
             });
 

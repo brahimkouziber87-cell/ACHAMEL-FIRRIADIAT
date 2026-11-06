@@ -498,7 +498,11 @@
             }
 
             const data = await res.json();
-            const resultHtml = data.result || '';
+            const rawResultHtml = data.result || '';
+            // The AI response is untrusted HTML: sanitize before it reaches the DOM.
+            const resultHtml = typeof window.sanitizeHtml === 'function'
+                ? window.sanitizeHtml(rawResultHtml)
+                : '';
 
             _lastGeneratedPlanHtml = resultHtml;
             window._lastGeneratedMathRemediationHtml = resultHtml;
@@ -528,11 +532,14 @@
         } catch (e) {
             console.error('Error generating AI math remediation:', e);
             if (reportContainer) {
+                const safeErrorMessage = typeof window.sanitizeHtml === 'function'
+                    ? window.sanitizeHtml(String((e && e.message) || 'يرجى التأكد من اتصال الإنترنت وإعادة المحاولة.'))
+                    : 'يرجى التأكد من اتصال الإنترنت وإعادة المحاولة.';
                 reportContainer.innerHTML = `
                     <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 18px; color: #991b1b; text-align: center;">
                         <div style="font-size: 1.8rem; margin-bottom: 6px;">⚠️</div>
                         <div style="font-weight: 800; font-size: 1rem; margin-bottom: 6px;">حدث خطأ أثناء الاتصال بمحرك الذكاء الاصطناعي</div>
-                        <div style="font-size: 0.82rem; margin-bottom: 14px;">${e.message || 'يرجى التأكد من اتصال الإنترنت وإعادة المحاولة.'}</div>
+                        <div style="font-size: 0.82rem; margin-bottom: 14px;">${safeErrorMessage}</div>
                         <button type="button" class="btn-primary" onclick="window.runMathRemediationGeneration()" style="background: #dc2626; color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
                             إعادة المحاولة 🔄
                         </button>

@@ -11,7 +11,6 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['apple-touch-icon.png', 'favicon.ico', 'favicon.png', 'logo.svg', 'logo.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
         manifest: {
           id: '/',
           name: 'منظومة التدبير التربوي - مادة الرياضيات',
@@ -88,7 +87,45 @@ export default defineConfig(() => {
           skipWaiting: true,
           clientsClaim: true,
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          // Only the small app shell is precached (icons/manifest). The heavy
+          // vanilla bundles (~17 MB) are cached lazily on first use below,
+          // which cuts the first visit install cost dramatically.
+          globPatterns: ['**/*.{ico,png,svg,webmanifest}'],
           runtimeCaching: [
+            {
+              // HTML shell: network-first so a new release is picked up,
+              // with offline fallback to the last cached page.
+              urlPattern: ({ request }) => request.mode === 'navigate',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'html-pages',
+                networkTimeoutSeconds: 3,
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              },
+            },
+            {
+              // JS/CSS (including the 38 vanilla modules): cache after first load.
+              urlPattern: ({ sameOrigin, request, url }) =>
+                sameOrigin && request.method === 'GET' && /\.(?:js|css)$/.test(url.pathname),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'static-assets',
+                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
+            {
+              // Fonts are large and rarely change.
+              urlPattern: /\.(?:woff2?|ttf|otf)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'fonts-cache',
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
             {
               urlPattern: /^https:\/\/cdnjs\.cloudflare\.com\/.*/i,
               handler: 'CacheFirst',
@@ -153,6 +190,23 @@ export default defineConfig(() => {
         },
       })
     ],
+    build: {
+      // Large print/PDF/studio bundles are expected; keep the warning useful.
+      chunkSizeWarningLimit: 1600,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined;
+            if (/[\\/](pdfjs-dist|jspdf|html2canvas|html-to-image)[\\/]/.test(id)) return 'vendor-pdf';
+            if (/[\\/](recharts|d3-[^\\/]+)[\\/]/.test(id)) return 'vendor-charts';
+            if (/[\\/](katex|mathjs)[\\/]/.test(id)) return 'vendor-math';
+            if (/[\\/](lucide-react)[\\/]/.test(id)) return 'vendor-icons';
+            if (/[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'vendor-react';
+            return undefined;
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(process.cwd(), '.'),

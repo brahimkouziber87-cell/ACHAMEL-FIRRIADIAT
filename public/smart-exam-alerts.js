@@ -1268,7 +1268,7 @@
                                 ${countdownText}
                             </span>
                             <span style="font-size: 0.8rem; font-weight: 700; color: #475569;">
-                                ${exam.title} (${exam.startDate})
+                                ${escapeHtml(exam.title)} (${escapeHtml(exam.startDate)})
                             </span>
                         </div>
                         <div style="font-size: 0.84rem; color: #1e293b; margin-top: 4px; font-weight: 700; line-height: 1.4;">

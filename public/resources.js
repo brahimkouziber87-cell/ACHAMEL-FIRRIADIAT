@@ -1841,7 +1841,7 @@
                         contentEl.innerHTML = `
                             <div style="background: #1e293b; padding: 35px 25px; border-radius: 16px; width: 90%; max-width: 500px; text-align: center; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                                 <div style="color: #10b981; margin-bottom: 15px;">${lucideIcon('headphones', {size: 48})}</div>
-                                <h4 style="color: #ffffff; margin: 0 0 16px 0; font-size: 1.1rem; word-break: break-word;">${title}</h4>
+                                <h4 style="color: #ffffff; margin: 0 0 16px 0; font-size: 1.1rem; word-break: break-word;">${window.escapeHtml(title)}</h4>
                                 <audio src="${currentPreviewBlobUrl}" controls autoplay style="width: 100%; outline: none;"></audio>
                             </div>
                         `;
@@ -1852,7 +1852,7 @@
                         if (iconEl) iconEl.innerHTML = `<span style="color: #8b5cf6;" data-lucide="image"></span>`;
                         contentEl.innerHTML = `
                             <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 15px;">
-                                <img src="${currentPreviewBlobUrl}" alt="${title}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+                                <img src="${currentPreviewBlobUrl}" alt="${window.escapeHtml(title)}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
                             </div>
                         `;
 
@@ -1872,9 +1872,9 @@
                         contentEl.innerHTML = `
                             <div style="text-align: center; color: #94a3b8; padding: 30px;">
                                 <div style="color: #64748b; margin-bottom: 15px;">${lucideIcon('file', {size: 54})}</div>
-                                <h4 style="color: #ffffff; margin: 0 0 8px 0; font-size: 1.1rem;">${title}</h4>
+                                <h4 style="color: #ffffff; margin: 0 0 8px 0; font-size: 1.1rem;">${window.escapeHtml(title)}</h4>
                                 <p style="font-size: 0.85rem; color: #94a3b8; margin: 0 0 20px 0;">لا يتوفر مشغل مباشر لهذا النوع من الملفات داخل المتصفح.</p>
-                                <button onclick="openLocalResource('${options.id}')" style="background: #059669; color: white; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                                <button type="button" onclick="openLocalResource('${window.escapeQuotes(options.id)}')" style="background: #059669; color: white; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                                     <span>${lucideIcon('download', {size: 14})}</span> تنزيل الملف إلى جهازك
                                 </button>
                             </div>

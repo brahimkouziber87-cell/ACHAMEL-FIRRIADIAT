@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "clean": "node -e \"fs.rmSync('dist', {recursive: true, force: true}); try { fs.unlinkSync('server.js'); } catch (_) {}\"",
     "lint": "tsc --noEmit",
+    "test": "node --import tsx --test src",
+    "size": "node scripts/check-bundle-size.mjs",
     "start": "node dist/server.cjs"
   },
   "dependencies": {
@@ -18,9 +20,13 @@
     "@types/katex": "^0.16.8",
     "@types/qrcode": "^1.5.6",
     "@vitejs/plugin-react": "^6.1.1",
+    "compression": "^1.8.2",
+    "dompurify": "^3.4.17",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.7.3",
     "firebase": "^13.1.0",
+    "firebase-admin": "^14.5.0",
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
@@ -39,6 +45,8 @@
     "vite-plugin-pwa": "^2.0.0"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -46,7 +54,6 @@
     "esbuild": "^0.28.2",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2",
-    "@types/express": "^4.17.21"
+    "typescript": "^7.0.2"
   }
 }

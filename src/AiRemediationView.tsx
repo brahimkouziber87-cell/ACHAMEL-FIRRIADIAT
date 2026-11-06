@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import {
   Sparkles,
   AlertTriangle,
@@ -1029,7 +1030,14 @@ export default function AiRemediationView({
       }
 
       const data = await res.json();
-      setAiGeminiReportHtml(data.result || 'تم التحليل بنجاح.');
+      const rawReport = data.result || 'تم التحليل بنجاح.';
+      // AI output is untrusted HTML: sanitize once, then reuse for display and print.
+      setAiGeminiReportHtml(
+        DOMPurify.sanitize(rawReport, {
+          USE_PROFILES: { html: true, svg: true, svgFilters: true, mathMl: true },
+          ADD_ATTR: ['target', 'rel', 'xmlns', 'viewBox'],
+        })
+      );
       setShowGeminiModal(true);
     } catch (e: any) {
       notifyUser('حدث تنبيه أثناء استدعاء محرك الذكاء الاصطناعي: ' + (e.message || 'يرجى المحاولة مجدداً'), 'warning');

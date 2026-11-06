@@ -1089,7 +1089,7 @@
                 nextExamHighlight.innerHTML = `
                     <span style="display:inline-flex; align-items:center; gap:6px; background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; padding:3px 10px; border-radius:999px; font-size:0.74rem; font-weight:800;">
                         <span>🎯 الموعد الأقرب:</span>
-                        <strong>${nextExam.title} (${nextExam.className || 'عام'})</strong>
+                        <strong>${window.escapeHtml(nextExam.title)} (${window.escapeHtml(nextExam.className || 'عام')})</strong>
                         <span style="background:#2563eb; color:#fff; padding:1px 7px; border-radius:999px; font-size:0.68rem;">${whenText}</span>
                     </span>
                 `;

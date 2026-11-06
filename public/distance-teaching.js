@@ -7046,9 +7046,11 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    type: 'report',
                     title: `${pageTitle} (${clsName})`,
-                    htmlContent: htmlDoc,
-                    expiresInDays: 30
+                    subtitle: 'لوحة مشتركة من استوديو التدريس',
+                    data: { html: htmlDoc },
+                    expiryDays: 30
                 })
             });
             if (resp.ok) {

@@ -6,20 +6,42 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    function authEmail() {
+      return isSignedIn() ? request.auth.token.get('email', '') : '';
+    }
+
+    function isAuthEmailVerified() {
+      return isSignedIn() && request.auth.token.get('email_verified', false) == true;
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isDirectGmailSlot(userId) {
-      return userId is string && userId.size() >= 10 && userId.size() <= 128 && userId.matches('^gmail_[a-zA-Z0-9_\\-]+$');
+    // Legacy e-mail slot identifier: gmail_<base64url(email)>
+    function isGmailSlot(userId) {
+      return userId is string && userId.size() >= 10 && userId.size() <= 128
+          && userId.matches('^gmail_[a-zA-Z0-9_\\-]+$');
     }
 
-    function isAuthorizedBackupUser(userId) {
-      return isValidId(userId) && (isOwner(userId) || isDirectGmailSlot(userId));
+    // A gmail_* slot may only be read/deleted by the signed-in account that
+    // owns that e-mail address. The slot id itself is base64(e-mail), which
+    // rules cannot recompute, so ownership is proven by the stored userEmail.
+    // Writes to legacy slots are intentionally denied: a client cannot prove
+    // that a slot id belongs to its own e-mail, so allowing writes would let
+    // any verified account overwrite another teacher's backup.
+    function ownsGmailSlotDoc(userId) {
+      return isAuthEmailVerified()
+          && isGmailSlot(userId)
+          && authEmail() != ''
+          && resource.data.userEmail == authEmail();
     }
 
     function isValidId(id) {
@@ -55,22 +77,48 @@ service cloud.firestore {
 
     function isValidBackupChunk(data) {
       return data.keys().hasAll(['chunk', 'index', 'totalChunks', 'lastUpdated'])
-        && data.keys().hasOnly(['chunk', 'index', 'totalChunks', 'lastUpdated'])
+        && data.keys().hasOnly(['chunk', 'index', 'totalChunks', 'lastUpdated', 'userEmail'])
         && data.chunk is string && data.chunk.size() <= 900000
         && data.index is number && data.index >= 0 && data.index <= 500
         && data.totalChunks is number && data.totalChunks >= 1 && data.totalChunks <= 500
-        && data.lastUpdated is string && data.lastUpdated.size() <= 64;
+        && data.lastUpdated is string && data.lastUpdated.size() <= 64
+        && (!('userEmail' in data) || (data.userEmail is string && data.userEmail.size() <= 256));
     }
 
+    // ------------------------------------------------------------------
+    // Cloud backups (one document per teacher account)
+    // ------------------------------------------------------------------
     match /users/{userId} {
-      allow get: if isAuthorizedBackupUser(userId);
-      allow create, update: if isAuthorizedBackupUser(userId) && isValidUserBackup(incoming());
-      allow delete: if isAuthorizedBackupUser(userId);
+      // Read: the Firebase owner, or the verified e-mail owner of a legacy slot.
+      allow get: if isOwner(userId) || ownsGmailSlotDoc(userId);
+
+      // Create / update: only the Firebase owner may write. Legacy gmail_*
+      // slots are read-only (see ownsGmailSlotDoc above).
+      allow create, update: if isOwner(userId)
+        && isValidUserBackup(incoming());
+
+      allow delete: if isOwner(userId) || ownsGmailSlotDoc(userId);
 
       match /chunks/{chunkId} {
-        allow get: if isAuthorizedBackupUser(userId) && isValidId(chunkId);
-        allow create, update: if isAuthorizedBackupUser(userId) && isValidId(chunkId) && isValidBackupChunk(incoming());
-        allow delete: if isAuthorizedBackupUser(userId) && isValidId(chunkId);
+        // Reading/deleting a chunk is allowed only if the parent backup slot
+        // belongs to the caller. `get()` is evaluated server-side and does not
+        // rely on the client being able to read the parent document.
+        allow get, delete: if isValidId(chunkId)
+          && (
+            isOwner(userId)
+            || (
+              isAuthEmailVerified()
+              && isGmailSlot(userId)
+              && authEmail() != ''
+              && get(/databases/$(database)/documents/users/$(userId)).data.userEmail == authEmail()
+            )
+          );
+
+        // Writing a chunk requires the Firebase owner. Legacy gmail_* slots
+        // are read-only, so no unverified account can inject chunks.
+        allow create, update: if isValidId(chunkId)
+          && isValidBackupChunk(incoming())
+          && isOwner(userId);
       }
     }
   }

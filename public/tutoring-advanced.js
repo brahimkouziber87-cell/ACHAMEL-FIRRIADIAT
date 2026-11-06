@@ -2271,9 +2271,9 @@
 
             if (badge) {
                 badge.innerHTML = `
-                    <span style="background: #fef3c7; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 6px;">🎓 ${std.group || 'دعم فردي'}</span>
-                    <span style="background: #fef3c7; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 6px;">📞 ${std.phone || 'لا يوجد هاتف مسجل'}</span>
-                    <span style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; padding: 2px 8px; border-radius: 6px;">💵 سعر الساعة: ${std.hourlyRate || std.fee || 150} د.م</span>
+                    <span style="background: #fef3c7; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 6px;">🎓 ${window.escapeHtml(std.group || 'دعم فردي')}</span>
+                    <span style="background: #fef3c7; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 6px;">📞 ${window.escapeHtml(std.phone || 'لا يوجد هاتف مسجل')}</span>
+                    <span style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; padding: 2px 8px; border-radius: 6px;">💵 سعر الساعة: ${Number(std.hourlyRate || std.fee || 150)} د.م</span>
                 `;
             }
         }
@@ -3106,7 +3106,7 @@
             if (roomInput) roomInput.value = grp.room || '';
             if (notesInput) notesInput.value = grp.notes || '';
             if (rosterInput) rosterInput.value = '';
-            if (titleEl) titleEl.innerHTML = `<span class="ui-icon" style="color: #0284c7;"><span data-lucide="edit-3" data-size="20"></span></span> تعديل مجموعة دعم مستقلة: ${grp.name}`;
+            if (titleEl) titleEl.innerHTML = `<span class="ui-icon" style="color: #0284c7;"><span data-lucide="edit-3" data-size="20"></span></span> تعديل مجموعة دعم مستقلة: ${window.escapeHtml(grp.name)}`;
         } else {
             if (origNameInput) origNameInput.value = '';
             if (nameInput) nameInput.value = '';
@@ -6222,14 +6222,14 @@
                             <div style="font-size:0.72rem;color:#bfdbfe;font-weight:bold;">بطاقة الانخراط والمواظبة في حصص الدعم</div>
                             <div style="font-size:1.05rem;font-weight:900;">فضاء التميز للدعم التربوي</div>
                         </div>
-                        <div style="background:rgba(255,255,255,0.18);padding:4px 10px;border-radius:8px;font-size:0.75rem;font-weight:bold;">${subjectName}</div>
+                        <div style="background:rgba(255,255,255,0.18);padding:4px 10px;border-radius:8px;font-size:0.75rem;font-weight:bold;">${window.escapeHtml(subjectName)}</div>
                     </div>
                     <div style="padding:18px;display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:center;">
                         <div style="font-size:0.84rem;color:#1e293b;display:flex;flex-direction:column;gap:6px;">
-                            <div><span style="color:#64748b;font-size:0.74rem;">الاسم الكامل:</span><div style="font-weight:900;font-size:1rem;color:#0f172a;">${std.name}</div></div>
-                            <div><span style="color:#64748b;font-size:0.74rem;">المجموعة / المستوى:</span><div style="font-weight:800;color:#1d4ed8;">${std.group || 'دعم فردي'} • ${std.level || 'عام'}</div></div>
+                            <div><span style="color:#64748b;font-size:0.74rem;">الاسم الكامل:</span><div style="font-weight:900;font-size:1rem;color:#0f172a;">${window.escapeHtml(std.name)}</div></div>
+                            <div><span style="color:#64748b;font-size:0.74rem;">المجموعة / المستوى:</span><div style="font-weight:800;color:#1d4ed8;">${window.escapeHtml(std.group || 'دعم فردي')} • ${window.escapeHtml(std.level || 'عام')}</div></div>
                             <div><span style="color:#64748b;font-size:0.74rem;">نظام الانخراط:</span><div style="font-weight:800;color:#047857;">${billingLabel}</div></div>
-                            <div><span style="color:#64748b;font-size:0.74rem;">إشراف:</span><div style="font-weight:700;">${teacherName}</div></div>
+                            <div><span style="color:#64748b;font-size:0.74rem;">إشراف:</span><div style="font-weight:700;">${window.escapeHtml(teacherName)}</div></div>
                         </div>
                         <div style="text-align:center;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
                             <img src="${qrUrl}" alt="QR" style="width:115px;height:115px;display:block;margin:0 auto;" />

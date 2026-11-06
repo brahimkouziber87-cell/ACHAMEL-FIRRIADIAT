@@ -1798,6 +1798,113 @@
         var saveData = saveDB;
         window.saveData = saveDB;
 
+        // ------------------------------------------------------------------
+        // Teacher password hardening (PBKDF2-SHA256 via WebCrypto)
+        // The legacy plaintext field is migrated automatically on next load,
+        // and verification still accepts it once so nobody gets locked out.
+        // ------------------------------------------------------------------
+        const PASSWORD_HASH_PREFIX = 'pbkdf2_sha256';
+        const PASSWORD_HASH_ITERATIONS = 150000;
+
+        function canHashPassword() {
+            return typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.deriveBits === 'function';
+        }
+
+        function bytesToBase64(bytes) {
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary);
+        }
+
+        function base64ToBytes(value) {
+            const binary = atob(value);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return bytes;
+        }
+
+        async function hashTeacherPassword(password) {
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
+            );
+            const bits = await crypto.subtle.deriveBits(
+                { name: 'PBKDF2', salt, iterations: PASSWORD_HASH_ITERATIONS, hash: 'SHA-256' },
+                keyMaterial,
+                256
+            );
+            return `${PASSWORD_HASH_PREFIX}$${PASSWORD_HASH_ITERATIONS}$${bytesToBase64(salt)}$${bytesToBase64(new Uint8Array(bits))}`;
+        }
+
+        function isHashedPassword(value) {
+            return typeof value === 'string' && value.startsWith(PASSWORD_HASH_PREFIX + '$');
+        }
+
+        async function setTeacherPassword(password) {
+            if (!canHashPassword()) {
+                // Non-secure context (plain HTTP on a LAN IP): keep the legacy
+                // behaviour instead of silently locking the teacher out.
+                db.teacherProfile.password = password;
+                delete db.teacherProfile.passwordHash;
+                return;
+            }
+            db.teacherProfile.passwordHash = await hashTeacherPassword(password);
+            delete db.teacherProfile.password;
+        }
+
+        async function verifyTeacherPassword(password, profile) {
+            if (!profile) return false;
+            if (isHashedPassword(profile.passwordHash)) {
+                const parts = profile.passwordHash.split('$');
+                if (parts.length !== 4) return false;
+                const iterations = parseInt(parts[1], 10) || PASSWORD_HASH_ITERATIONS;
+                try {
+                    const salt = base64ToBytes(parts[2]);
+                    const expected = base64ToBytes(parts[3]);
+                    const keyMaterial = await crypto.subtle.importKey(
+                        'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
+                    );
+                    const bits = new Uint8Array(await crypto.subtle.deriveBits(
+                        { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+                        keyMaterial,
+                        expected.length * 8
+                    ));
+                    if (bits.length !== expected.length) return false;
+                    let diff = 0;
+                    for (let i = 0; i < bits.length; i++) diff |= bits[i] ^ expected[i];
+                    return diff === 0;
+                } catch (err) {
+                    console.warn('Password verification failed:', err?.message || String(err));
+                    return false;
+                }
+            }
+            // Legacy plaintext comparison + one-time migration.
+            if (typeof profile.password === 'string' && profile.password.length > 0) {
+                if (password !== profile.password) return false;
+                try {
+                    await setTeacherPassword(password);
+                    saveDB();
+                } catch (err) {
+                    console.warn('Password migration failed:', err?.message || String(err));
+                }
+                return true;
+            }
+            return false;
+        }
+
+        async function migrateLegacyTeacherPassword() {
+            if (!db.teacherProfile || !db.teacherProfile.password) return;
+            if (db.teacherProfile.passwordHash) return;
+            if (!canHashPassword()) return;
+            try {
+                await setTeacherPassword(db.teacherProfile.password);
+                saveDB();
+                console.info('[security] teacher password migrated to PBKDF2.');
+            } catch (err) {
+                console.warn('Password migration skipped:', err?.message || String(err));
+            }
+        }
+
         function checkAuth() {
             const loginScreen = document.getElementById('loginScreen');
             const setupForm = document.getElementById('setupForm');
@@ -1813,7 +1920,7 @@
                 return;
             }
             
-            if (!db.teacherProfile.password) {
+            if (!db.teacherProfile.password && !db.teacherProfile.passwordHash) {
                 if (loginScreen) loginScreen.style.display = 'flex';
                 if (setupForm) setupForm.style.display = 'block';
                 if (loginForm) loginForm.style.display = 'none';
@@ -1825,7 +1932,7 @@
             updateTeacherNameInHeader();
         }
         
-        function handleSetup() {
+        async function handleSetup() {
             const name = document.getElementById('setupName').value.trim();
             const username = document.getElementById('setupUsername').value.trim();
             const pwd = document.getElementById('setupPassword').value;
@@ -1833,22 +1940,27 @@
                 alert('يرجى إدخال الاسم، اسم المستخدم والقن السري.');
                 return;
             }
+            if (pwd.length < 4) {
+                alert('يجب أن يتكون القن السري من 4 أحرف على الأقل.');
+                return;
+            }
             db.teacherProfile.name = name;
             db.teacherProfile.username = username;
-            db.teacherProfile.password = pwd;
+            await setTeacherPassword(pwd);
             saveDB();
             localStorage.setItem('userLoggedIn', 'true');
             document.getElementById('loginScreen').style.display = 'none';
             updateTeacherNameInHeader();
         }
         
-        function handleLogin() {
+        async function handleLogin() {
             const username = document.getElementById('loginUsername').value.trim();
             const pwd = document.getElementById('loginPassword').value;
             // Backwards compatibility for users who didn't set a username previously
             const validUsername = db.teacherProfile.username || db.teacherProfile.name;
+            const passwordOk = await verifyTeacherPassword(pwd, db.teacherProfile);
             
-            if (username === validUsername && pwd === db.teacherProfile.password) {
+            if (username === validUsername && passwordOk) {
                 localStorage.setItem('userLoggedIn', 'true');
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('loginUsername').value = '';
@@ -2800,7 +2912,7 @@
             setSettingsSaveStatus('saved');
         }
 
-        function updateTeacherPassword() {
+        async function updateTeacherPassword() {
             const oldPwd = document.getElementById('settingsOldPassword').value;
             const newPwd = document.getElementById('settingsNewPassword').value;
             
@@ -2808,11 +2920,16 @@
                 showAppToast('المرجو إدخال القن السري الحالي والجديد', 'warning');
                 return;
             }
-            if (oldPwd !== db.teacherProfile.password) {
+            const oldOk = await verifyTeacherPassword(oldPwd, db.teacherProfile);
+            if (!oldOk) {
                 showAppToast('القن السري الحالي غير صحيح', 'warning');
                 return;
             }
-            db.teacherProfile.password = newPwd;
+            if (newPwd.length < 4) {
+                showAppToast('يجب أن يتكون القن السري الجديد من 4 أحرف على الأقل', 'warning');
+                return;
+            }
+            await setTeacherPassword(newPwd);
             saveDB();
             document.getElementById('settingsOldPassword').value = '';
             document.getElementById('settingsNewPassword').value = '';
@@ -4789,7 +4906,7 @@
             if (legacy) legacy.style.display = 'none';
         }
 
-        function saveTeacherSettings() {
+        async function saveTeacherSettings() {
             const name = document.getElementById('settingsTeacherName').value.trim();
             const username = document.getElementById('settingsUsername').value.trim();
             const oldPwd = document.getElementById('settingsOldPassword').value;
@@ -4802,7 +4919,8 @@
 
             // Check if password change is requested
             if (oldPwd || newPwd) {
-                if (oldPwd !== db.teacherProfile.password) {
+                const oldOk = await verifyTeacherPassword(oldPwd, db.teacherProfile);
+                if (!oldOk) {
                     alert('القن السري الحالي غير صحيح.');
                     return;
                 }
@@ -4810,7 +4928,11 @@
                     alert('يرجى إدخال القن السري الجديد.');
                     return;
                 }
-                db.teacherProfile.password = newPwd;
+                if (newPwd.length < 4) {
+                    alert('يجب أن يتكون القن السري الجديد من 4 أحرف على الأقل.');
+                    return;
+                }
+                await setTeacherPassword(newPwd);
             }
 
             db.teacherProfile.name = name;
@@ -9780,10 +9902,10 @@
                     div.style.cssText = 'background: white; border: 1px solid #e9d5ff; border-radius: 6px; padding: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);';
                     div.innerHTML = `
                         <div>
-                            <div style="font-weight: bold; color: var(--purple); font-size: 0.9rem;">${item.title}</div>
-                            <div style="font-size: 0.8rem; color: ${statusColor}; font-weight: bold;"><span class="ui-icon">${lucideIcon('calendar', {size: 11})}</span> ${item.date} ${statusLabel}</div>
+                            <div style="font-weight: bold; color: var(--purple); font-size: 0.9rem;">${escapeHtml(item.title)}</div>
+                            <div style="font-size: 0.8rem; color: ${statusColor}; font-weight: bold;"><span class="ui-icon">${lucideIcon('calendar', {size: 11})}</span> ${escapeHtml(item.date)} ${statusLabel}</div>
                         </div>
-                        <button onclick="deleteHomeworkAgenda('${className}', '${item.id}')" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.85rem; padding: 4px;" title="حذف الموعد">${lucideIcon('trash2', {size: 12})}</button>
+                        <button type="button" onclick="deleteHomeworkAgenda('${escapeQuotes(className)}', '${escapeQuotes(item.id)}')" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.85rem; padding: 4px;" title="حذف الموعد">${lucideIcon('trash2', {size: 12})}</button>
                     `;
                     list.appendChild(div);
                 });
@@ -10566,16 +10688,16 @@
                 tr.innerHTML = `
                     <td style="padding: 8px 10px; text-align: center; font-weight: 800; color: #475569;">${profile.orderNum || (idx + 1)}</td>
                     <td style="padding: 8px 10px; font-weight: 800; color: #0f172a;">
-                        ${profile.name}
-                        ${profile.massar ? `<div style="font-size: 0.7rem; color: #64748b; font-weight: normal;">${profile.massar}</div>` : ''}
+                        ${escapeHtml(profile.name)}
+                        ${profile.massar ? `<div style="font-size: 0.7rem; color: #64748b; font-weight: normal;">${escapeHtml(profile.massar)}</div>` : ''}
                     </td>
                     <td style="padding: 8px 10px; text-align: center;">
                         <span style="display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 0.78rem; font-weight: 800; ${avgStyle}">
                             ${avgText}
                         </span>
                         <div style="margin-top: 4px;">
-                            <span style="display: inline-block; padding: 1px 6px; border-radius: 5px; font-size: 0.68rem; font-weight: 800; background: ${prog.bg}; color: ${prog.color}; border: 1px solid ${prog.border};" title="مسار الفروض: ${prog.sequenceText}">
-                                ${prog.badge} ${prog.label}
+                            <span style="display: inline-block; padding: 1px 6px; border-radius: 5px; font-size: 0.68rem; font-weight: 800; background: ${prog.bg}; color: ${prog.color}; border: 1px solid ${prog.border};" title="مسار الفروض: ${escapeHtml(prog.sequenceText)}">
+                                ${escapeHtml(prog.badge)} ${escapeHtml(prog.label)}
                             </span>
                         </div>
                     </td>
@@ -10584,14 +10706,14 @@
                         ${profile.lateCount > 0 ? `<div style="color: #d97706; font-size: 0.7rem;">${profile.lateCount} تأخر</div>` : ''}
                     </td>
                     <td style="padding: 8px 10px; text-align: center; font-size: 0.78rem;">
-                        <span style="color: #334155; font-weight: 700;">${profile.behaviorStatus}</span>
+                        <span style="color: #334155; font-weight: 700;">${escapeHtml(profile.behaviorStatus)}</span>
                         ${profile.missedHw > 0 ? `<div style="color: #7c3aed; font-size: 0.7rem; font-weight: bold;">أهمل ${profile.missedHw} واجب</div>` : ''}
                     </td>
                     <td style="padding: 6px 10px;">
-                        <textarea id="batchRemarkInput_${std.id}" onchange="updateBatchRemarkData('${std.id}', this.value)" style="width: 100%; min-height: 48px; padding: 6px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: 'Cairo', sans-serif; font-size: 0.8rem; line-height: 1.4; resize: vertical; background: #fff;">${remarkObj.primary}</textarea>
+                        <textarea id="batchRemarkInput_${escapeQuotes(std.id)}" onchange="updateBatchRemarkData('${escapeQuotes(std.id)}', this.value)" style="width: 100%; min-height: 48px; padding: 6px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: 'Cairo', sans-serif; font-size: 0.8rem; line-height: 1.4; resize: vertical; background: #fff;">${escapeHtml(remarkObj.primary)}</textarea>
                     </td>
                     <td style="padding: 8px 10px; text-align: center;">
-                        <button type="button" onclick="cycleBatchRowAlternative('${std.id}')" title="اقتراح بديل لهذه الملاحظة" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 6px; padding: 4px 8px; font-size: 0.74rem; cursor: pointer; font-weight: bold;">
+                        <button type="button" onclick="cycleBatchRowAlternative('${escapeQuotes(std.id)}')" title="اقتراح بديل لهذه الملاحظة" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 6px; padding: 4px 8px; font-size: 0.74rem; cursor: pointer; font-weight: bold;">
                             بديل 🔄
                         </button>
                     </td>
@@ -16170,8 +16292,8 @@
         }
 
         function escapeQuotes(str) {
-            if (!str) return '';
-            return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
 
         function showAppToast(msg, type = 'info') {
@@ -19246,13 +19368,23 @@ ${behaviorData.note ? `ملاحظات: ${behaviorData.note}` : ''}
                     throw new Error(data.error || 'حدث خطأ في الاتصال بالخادم');
                 }
                 
-                if (resultDiv) resultDiv.innerHTML = data.result;
+                if (resultDiv) {
+                    if (typeof window.sanitizeHtml === 'function') {
+                        resultDiv.innerHTML = window.sanitizeHtml(data.result);
+                    } else {
+                        // Fail closed if the sanitizer is unavailable.
+                        resultDiv.textContent = data.result || '';
+                    }
+                }
                 if (containerDiv) containerDiv.style.display = 'block';
                 
             } catch (error) {
                 console.error(error?.message || String(error));
                 if (resultDiv) {
-                    resultDiv.innerHTML = '<div style="color: var(--danger); padding: 14px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">حدث خطأ أثناء جلب التحليل: ' + error.message + '</div>';
+                    var errorHtml = '<div style="color: var(--danger); padding: 14px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">حدث خطأ أثناء جلب التحليل: ' + (error && error.message ? error.message : '') + '</div>';
+                    resultDiv.innerHTML = typeof window.sanitizeHtml === 'function'
+                        ? window.sanitizeHtml(errorHtml)
+                        : 'حدث خطأ أثناء جلب التحليل.';
                 }
                 if (containerDiv) containerDiv.style.display = 'block';
             } finally {
@@ -25312,6 +25444,7 @@ ${behaviorData.note ? `ملاحظات: ${behaviorData.note}` : ''}
         window.exportClassAllStudentsAbsencePDF = exportClassAllStudentsAbsencePDF;
 
         checkAuth();
+        migrateLegacyTeacherPassword();
         initReportDates();
         refreshClassDropdown();
         updatePeriodDropdown();

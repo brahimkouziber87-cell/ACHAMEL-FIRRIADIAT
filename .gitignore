@@ -7,3 +7,7 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Google AI Studio generated artifacts (large media, not source)
+.aistudio/
+data/
