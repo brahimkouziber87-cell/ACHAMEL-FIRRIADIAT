@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "node -e \"fs.rmSync('dist', {recursive: true, force: true}); try { fs.unlinkSync('server.js'); } catch (_) {}\"",
     "lint": "tsc --noEmit",
-    "test": "node --import tsx --test src",
+    "test": "node scripts/run-tests.mjs",
     "size": "node scripts/check-bundle-size.mjs",
     "start": "node dist/server.cjs"
   },
